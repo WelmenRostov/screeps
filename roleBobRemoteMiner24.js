@@ -1,8 +1,8 @@
 const creepMovement = require('./creepMovement');
 
-let roleBobRemoteMiner = {
+let roleBobRemoteMiner24 = {
     run: function(creep) {
-        const targetRoom = creep.memory.targetRoom || 'W22N56';
+        const targetRoom = creep.memory.targetRoom || 'W24N56';
 
         if (creep.room.name !== targetRoom) {
             creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
@@ -16,4 +16,4 @@ let roleBobRemoteMiner = {
     }
 };
 
-module.exports = roleBobRemoteMiner;
+module.exports = roleBobRemoteMiner24;

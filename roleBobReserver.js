@@ -18,6 +18,22 @@ let roleBobReserver = {
         const controller = creep.room.controller;
         if (!controller) return;
 
+        if (controller.my) {
+            return;
+        }
+
+        const hasClaim = creep.getActiveBodyparts(CLAIM) > 0;
+
+        if (hasClaim && !controller.owner) {
+            if (creep.claimController(controller) === ERR_NOT_IN_RANGE) {
+                creepMovement.moveTo(creep, controller, {
+                    reusePath: 5,
+                    visualizePathStyle: { stroke: '#00ffff' }
+                });
+            }
+            return;
+        }
+
         if (controller.owner && !controller.my) {
             if (creep.attackController(controller) === ERR_NOT_IN_RANGE) {
                 creepMovement.moveTo(creep, controller, {

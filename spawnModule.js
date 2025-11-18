@@ -78,7 +78,7 @@ const spawnModule = {
 	    ];
 	}*/
 
-	let name = 'attacker' + Game.time;
+	let name = 'Attacker_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'attacker', targetRoom, homeRoom: spawn.room.name };
 	return spawn.spawnCreep(body, name, { memory });
     }
@@ -114,7 +114,7 @@ const spawnModule = {
 	    ];
 	}*/
 
-	let name = 'healer' + Game.time;
+	let name = 'Healer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'healer', targetRoom, homeRoom: spawn.room.name };
 	return spawn.spawnCreep(body, name, { memory });
     }
@@ -132,7 +132,7 @@ const spawnModule = {
 	body.push(...Array(17).fill(MOVE));
 	body.push(...Array(8).fill(RANGED_ATTACK));
 
-	let name = 'rat' + Game.time;
+	let name = 'Rat_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'rat', targetRoom, homeRoom: spawn.room.name };
 	if (targetPos && typeof targetPos.x === 'number' && typeof targetPos.y === 'number') {
 	    let target = { x: targetPos.x, y: targetPos.y, roomName: targetPos.roomName || targetRoom };
@@ -152,7 +152,8 @@ const spawnModule = {
     	    MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
     	    WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK
     	];
-    	let name = 'breaker' + Game.time;
+    	let homeRoom = spawn.room.name;
+    	let name = 'Breaker_' + spawn.name + '_' + homeRoom + '_' + Game.time;
     	return spawn.spawnCreep(body, name, { memory: { role: 'attacker', routeRooms, wall: wallTarget } });
     },
     
@@ -160,7 +161,8 @@ const spawnModule = {
     spawnDriller: function() {
     	let spawn = Game.spawns['Mammy'];
     	let body = [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE];
-    	let name = 'driller' + Game.time;
+    	let homeRoom = spawn.room.name;
+    	let name = 'Driller_' + spawn.name + '_' + homeRoom + '_' + Game.time;
     	return spawn.spawnCreep(body, name, { memory: { role: 'driller' } });
     },
     
@@ -171,7 +173,8 @@ const spawnModule = {
     	    MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
     	    CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
     	];
-    	let name = 'mover' + Game.time;
+    	let homeRoom = spawn.room.name;
+    	let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
     	return spawn.spawnCreep(body, name, { memory: { role: 'mover' } });
     },
 
@@ -179,7 +182,7 @@ const spawnModule = {
     spawnClaimer: function(targetRoom) {
     	let spawn = Game.spawns['Mammy'];
     	let body = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM, CLAIM];
-    	let name = 'claimer' + Game.time;
+    	let name = 'Claimer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
     	return spawn.spawnCreep(body, name, { memory: { role: 'claimer', targetRoom } });
     },
 
@@ -193,7 +196,7 @@ const spawnModule = {
 	body.push(...Array(10).fill(MOVE));
 	body.push(...Array(15).fill(ATTACK));
 
-	let name = 'assaultMelee' + Game.time;
+	let name = 'AssaultMelee_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'assaultMelee', targetRoom, homeRoom: spawn.room.name };
 	if (options.assaultSquadId) memory.assaultSquadId = options.assaultSquadId;
 	if (options.route) memory.route = options.route.slice();
@@ -210,7 +213,7 @@ const spawnModule = {
 	body.push(...Array(10).fill(MOVE));
 	body.push(...Array(10).fill(RANGED_ATTACK));
 
-	let name = 'assaultRanged' + Game.time;
+	let name = 'AssaultRanged_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'assaultRanged', targetRoom, homeRoom: spawn.room.name };
 	if (options.assaultSquadId) memory.assaultSquadId = options.assaultSquadId;
 	if (options.route) memory.route = options.route.slice();
@@ -227,7 +230,7 @@ const spawnModule = {
 	body.push(...Array(10).fill(MOVE));
 	body.push(...Array(6).fill(HEAL));
 
-	let name = 'assaultHealer' + Game.time;
+	let name = 'AssaultHealer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'assaultHealer', targetRoom, homeRoom: spawn.room.name };
 	if (options.assaultSquadId) memory.assaultSquadId = options.assaultSquadId;
 	if (options.route) memory.route = options.route.slice();
@@ -242,7 +245,8 @@ const spawnModule = {
 	body.push(...Array(30).fill(MOVE));
 	body.push(...Array(5).fill(RANGED_ATTACK));
 
-	let name = 'patrol' + Game.time;
+	let targetRoom = patrolPos.roomName || spawn.room.name;
+	let name = 'Patrol_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'patrol', patrolPos, homeRoom: spawn.room.name };
 	return spawn.spawnCreep(body, name, { memory });
     }

@@ -19,17 +19,29 @@ const roleBobRepairer = require('./roleBobRepairer');
 const roleBobMover = require('./roleBobMover');
 const roleBobHelper = require('./roleBobHelper');
 const roleBobInvader = require('./roleBobInvader');
+const roleBobInvader24 = require('./roleBobInvader24');
 const roleBobMiner = require('./roleBobMiner');
 const roleBobRemoteMiner = require('./roleBobRemoteMiner');
+const roleBobRemoteMiner24 = require('./roleBobRemoteMiner24');
 const roleBobRemoteHauler = require('./roleBobRemoteHauler');
+const roleBobRemoteHauler24 = require('./roleBobRemoteHauler24');
 const roleBobReserver = require('./roleBobReserver');
 const roleBobAttacker = require('./roleBobAttacker');
+const roleBobHealer = require('./roleBobHealer');
+const roleBobNanny = require('./roleBobNanny');
 const roleAssaultMelee = require('./roleAssaultMelee');
 const roleAssaultRanged = require('./roleAssaultRanged');
 const roleAssaultHealer = require('./roleAssaultHealer');
 const rolePatrol = require('./rolePatrol');
+const roleMammyDefender = require('./roleMammyDefender');
+const roleMammyHealer = require('./roleMammyHealer');
+const roleMammyRemoteHauler = require('./roleMammyRemoteHauler');
+const roleSteveUpdater = require('./roleSteveUpdater');
+const roleSteveMiner = require('./roleSteveMiner');
+const roleSteveMover = require('./roleSteveMover');
 const roleManager = require('./roleManager');
 const spawnBobManager = require('./spawnBobManager');
+const spawnSteveManager = require('./spawnSteveManager');
 
 if (!global.__bobPickupPatched) {
     const originalPickup = Creep.prototype.pickup;
@@ -88,7 +100,6 @@ global.changePatrolRoom = function(roomName, x, y) {
 for (let name in Memory.creeps) {
     if (!Game.creeps[name]) {
         delete Memory.creeps[name];
-        console.log('🗑️ Удалена память умершего крипа:', name);
     }
 }
 
@@ -126,20 +137,62 @@ const roleHandlers = {
     bobHelper: roleBobHelper,
     bobMiner: roleBobMiner,
     bobInvader: roleBobInvader,
+    bobInvader24: roleBobInvader24,
     bobRemoteMiner: roleBobRemoteMiner,
+    bobRemoteMiner24: roleBobRemoteMiner24,
     bobRemoteHauler: roleBobRemoteHauler,
+    bobRemoteHauler24: roleBobRemoteHauler24,
     bobReserver: roleBobReserver,
     bobAttacker: roleBobAttacker,
+    bobHealer: roleBobHealer,
+    bobNanny: roleBobNanny,
     assaultMelee: roleAssaultMelee,
     assaultRanged: roleAssaultRanged,
     assaultHealer: roleAssaultHealer,
-    patrol: rolePatrol
+    patrol: rolePatrol,
+    mammyDefender: roleMammyDefender,
+    mammyHealer: roleMammyHealer,
+    mammyRemoteHauler: roleMammyRemoteHauler,
+    steveUpdater: roleSteveUpdater,
+    steveMiner: roleSteveMiner,
+    steveMover: roleSteveMover
 };
+
+const creepMovement = require('./creepMovement');
+
+let dangerZonesW24N56 = null;
+let dangerZonesCacheTick = 0;
+
+if (Game.rooms['W24N56']) {
+    if (!dangerZonesW24N56 || dangerZonesCacheTick !== Game.time) {
+        dangerZonesW24N56 = creepMovement.getDangerZones('W24N56');
+        dangerZonesCacheTick = Game.time;
+        if (dangerZonesW24N56.length > 0) {
+            creepMovement.visualizeDangerZones('W24N56', dangerZonesW24N56);
+        }
+    }
+}
 
 for (let name in Game.creeps) {
     let creep = Game.creeps[name];
+    
+    if (creep.room.name === 'W24N56' && dangerZonesW24N56 && dangerZonesW24N56.length > 0) {
+        if (!creepMovement.canBeInZone(creep)) {
+            if (creepMovement.handleDangerZones(creep, dangerZonesW24N56)) {
+                continue;
+            }
+        }
+    }
+    
     let handler = roleHandlers[creep.memory.role];
-    if (handler) handler.run(creep);
+    if (handler) {
+        if (typeof handler.run === 'function') {
+            handler.run(creep);
+        } else {
+            console.log('⚠️ Обработчик роли "' + creep.memory.role + '" не имеет метода run. Крип: ' + name);
+        }
+    }
+    
 }
 
 // === Логика турелей ===
@@ -169,6 +222,9 @@ if (assaultSquad.tick()) {
 
 // Логика спавна Bob — вызываем раз в тик
 spawnBobManager.tick();
+
+// Логика спавна Steve — вызываем раз в тик
+spawnSteveManager.tick();
 
 if (!Memory.storageStats) Memory.storageStats = {};
 
@@ -222,7 +278,7 @@ for (let roomName in Game.rooms) {
     
     const nextUpdate = Math.max(0, PERIOD - (Game.time - stat.s));
     
-    room.visual.text(`${stat.result >= 0 ? '+' : ''}${stat.result}`, storage.pos.x, storage.pos.y - 1.1, {align: 'center', font: 0.3, color: stat.result >= 0 ? '#00ff00' : '#ff0000'});
+    room.visual.text(`${stat.result >= 0 ? '-' : '+'}${stat.result}`, storage.pos.x, storage.pos.y - 1.1, {align: 'center', font: 0.3, color: stat.result >= 0 ? '#ff0000' : '#00ff00'});
     room.visual.text(`${nextUpdate}`, storage.pos.x, storage.pos.y + 1.2, {align: 'center', font: 0.3, color: '#ffffff'});
     room.visual.text(`+${stat.put}`, storage.pos.x - 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#00ff00'});
     room.visual.text(`-${stat.taken}`, storage.pos.x + 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#ff00' +

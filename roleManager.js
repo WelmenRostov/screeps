@@ -18,15 +18,18 @@ let roleManager = {
         const PATROL_POS = {x: 26, y: 24, roomName: 'W20N57'};
 
         const minRoles = {
-            builder: 1,
             driller: 1,
             mover: 1,
+            builder: 2,
             filler: 0,
             updater: 2,
             invader: 0,
             remoteMiner: 0,
-            remoteHauler: 1,
+            remoteHauler: 0,
             patrol: 0,
+            mammyDefender: 1,
+            mammyHealer: 2,
+            mammyRemoteHauler: 2,
         };
 
         const targetRoom = 'W22N56';
@@ -51,7 +54,10 @@ let roleManager = {
             remoteMiner: 0,
             remoteHauler: 0,
             attacker: 0,
-            patrol: 0
+            patrol: 0,
+            mammyDefender: 0,
+            mammyHealer: 0,
+            mammyRemoteHauler: 0
         };
         for (let c of allCreeps) {
             if (roleSum.hasOwnProperty(c.memory.role) && c.ticksToLive) {
@@ -65,22 +71,29 @@ let roleManager = {
         }
 
         // Спавним если суммарная жизнь ниже порога
-        if (roleSum.builder < minRoles.builder * 1 && !spawn.spawning) {
-            this.spawnBuilder();
-        }
         if (roleSum.driller < minRoles.driller * 100 && !spawn.spawning) {
             this.spawnDriller();
         }
-        if (roleSum.mover < minRoles.mover * 650 && !spawn.spawning) {
+        if (roleSum.mover < minRoles.mover * 1200 && !spawn.spawning) {
             this.spawnMover();
         }
+
+        if (roleSum.mammyHealer < minRoles.mammyHealer * 1000 && !spawn.spawning) {
+            this.spawnMammyHealer();
+        }
+        if (roleSum.mammyDefender < minRoles.mammyDefender * 300 && !spawn.spawning) {
+            this.spawnMammyDefender();
+        }
+        if (roleSum.builder < minRoles.builder * 1 && !spawn.spawning) {
+            this.spawnBuilder();
+        }
         const fillerSourceRoom = 'W23N56';
-        const fillerTargetRoom = 'W23N57';
+        const fillerTargetRoom = 'W23N56';
         
         if (roleSum.filler < minRoles.filler * 100 && !spawn.spawning) {
             this.spawnFiller(fillerSourceRoom, fillerTargetRoom);
         }
-        if (roleSum.updater < minRoles.updater * 600 && !spawn.spawning) {
+        if (roleSum.updater < minRoles.updater * 1 && !spawn.spawning) {
             this.spawnUpdater();
         }
         if (roleSum.invader < minRoles.invader * 10 && !spawn.spawning) {
@@ -95,18 +108,21 @@ let roleManager = {
         if (roleSum.patrol < minRoles.patrol * 600 && !spawn.spawning) {
             this.spawnPatrol(PATROL_POS);
         }
+        if (roleSum.mammyRemoteHauler < minRoles.mammyRemoteHauler * timeLife && !spawn.spawning) {
+            this.spawnMammyRemoteHauler();
+        }
     },
 
     spawnBuilder: function() {
     let spawn = Game.spawns['Mammy'];
-    let name = 'builder' + Game.time;
+    let homeRoom = spawn.room.name;
+    let name = 'Builder_' + spawn.name + '_' + homeRoom + '_' + Game.time;
     let result = spawn.spawnCreep(parametrCrepps.base, name, { memory: { role: 'builder' } });
     if (result === ERR_NOT_ENOUGH_ENERGY) {
         spawn.spawnCreep([
-            WORK,WORK,WORK,WORK,WORK,WORK,
-            MOVE,MOVE,MOVE,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
+            WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
+            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
+            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
         ], name, { memory: { role: 'builder' } });
     }
     },
@@ -115,8 +131,13 @@ let roleManager = {
 
     spawnDriller: function() {
 	let spawn = Game.spawns['Mammy'];
-	let body = [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE];
-	let name = 'driller' + Game.time;
+        let body = [
+            WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
+            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
+            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
+        ];
+	let homeRoom = spawn.room.name;
+	let name = 'Driller_' + spawn.name + '_' + homeRoom + '_' + Game.time;
 	return spawn.spawnCreep(body, name, { memory: { role: 'driller' } });
     },
 
@@ -129,7 +150,8 @@ let roleManager = {
             CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
             CARRY,CARRY,CARRY,CARRY
         ];
-	let name = 'mover' + Game.time;
+	let homeRoom = spawn.room.name;
+	let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
 	return spawn.spawnCreep(body, name, { memory: { role: 'mover' } });
     },
 
@@ -139,7 +161,7 @@ let roleManager = {
             MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
             CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
         ];
-        let name = 'filler' + Game.time;
+        let name = 'Filler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'filler', sourceRoom, targetRoom } });
     },
 
@@ -148,10 +170,11 @@ let roleManager = {
 	// Максимально эффективный улучшатель за 1300 энергии: 13 WORK + 13 MOVE + 2 CARRY
 	let body = [
 	    WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
-            MOVE,MOVE,MOVE,MOVE,MOVE,
+            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
 	    CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
 	];
-	let name = 'updater' + Game.time;
+	let homeRoom = spawn.room.name;
+	let name = 'Updater_' + spawn.name + '_' + homeRoom + '_' + Game.time;
 	return spawn.spawnCreep(body, name, { memory: { role: 'updater' } });
     },
 
@@ -163,10 +186,10 @@ let roleManager = {
 	    MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
 	    CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
 	];
-	let name = 'invader' + Game.time;
+	let homeRoom = spawn.room.name;
+	let name = 'Invader_' + spawn.name + '_' + homeRoom + '_' + Game.time;
 	return spawn.spawnCreep(body, name, { memory: { role: 'invader', homeRoom: spawn.room.name } });
-    }
-    ,
+    },
 
     spawnRemoteMiner: function(targetRoom) {
         let spawn = Game.spawns['Mammy'];
@@ -174,7 +197,7 @@ let roleManager = {
             WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
             MOVE,MOVE,MOVE,MOVE,
         ];
-        let name = 'remoteMiner' + Game.time;
+        let name = 'RemoteMiner_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'remoteMiner', targetRoom } });
     }
     ,
@@ -186,12 +209,87 @@ let roleManager = {
             CARRY,CARRY,
             CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
         ];
-        let name = 'remoteHauler' + Game.time;
+        let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'remoteHauler', targetRoom, homeLinkPos } });
     },
 
     spawnPatrol: function(patrolPos) {
         return spawnModule.spawnPatrol(patrolPos);
+    },
+
+    spawnMammyDefender: function() {
+        let spawn = Game.spawns['Mammy'];
+        if (!spawn) return ERR_INVALID_TARGET;
+        
+        let body = [
+            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
+            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
+            TOUGH, TOUGH, TOUGH,
+
+            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+
+            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
+            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
+            ATTACK, ATTACK,
+
+                    ];
+        
+        let targetRoom = 'W24N56';
+        let name = 'Defender_' + spawn.name + '_' + targetRoom + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'mammyDefender',
+                targetRoom: 'W24N56',
+                homeRoom: spawn.room.name
+            }
+        });
+    },
+
+    spawnMammyHealer: function() {
+        let spawn = Game.spawns['Mammy'];
+        if (!spawn) return ERR_INVALID_TARGET;
+        
+        let body = [
+            TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+            MOVE, MOVE, MOVE, MOVE,
+            HEAL, HEAL, HEAL, HEAL, HEAL, HEAL
+        ];
+        
+        let targetRoom = 'W24N56';
+        let name = 'Healer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'mammyHealer',
+                targetRoom: 'W24N56',
+                homeRoom: spawn.room.name
+            }
+        });
+    },
+
+    spawnMammyRemoteHauler: function() {
+        let spawn = Game.spawns['Mammy'];
+        if (!spawn) return ERR_INVALID_TARGET;
+        
+        let body = [
+            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+            MOVE, MOVE, MOVE, MOVE,
+            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+            CARRY, CARRY, CARRY, CARRY
+        ];
+        
+        let targetRoom = 'W24N56';
+        let homeRoom = spawn.room.name;
+        let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'mammyRemoteHauler',
+                targetRoom: targetRoom,
+                homeRoom: homeRoom
+            }
+        });
     }
 };
 
