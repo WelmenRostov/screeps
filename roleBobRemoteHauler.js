@@ -1,9 +1,32 @@
 const creepMovement = require('./creepMovement');
 
 let roleBobRemoteHauler = {
+    countCreepsGoingToSource: function(sourceId, targetRoom) {
+        if (!Memory.remoteHaulers) {
+            Memory.remoteHaulers = {};
+        }
+        if (!Memory.remoteHaulers[targetRoom]) {
+            Memory.remoteHaulers[targetRoom] = {};
+        }
+        
+        let cache = Memory.remoteHaulers[targetRoom];
+        if (cache.lastTick !== Game.time) {
+            cache.counts = {};
+            cache.lastTick = Game.time;
+            
+            for (let name in Game.creeps) {
+                let c = Game.creeps[name];
+                if (c.memory.role === 'bobRemoteHauler' && c.memory.committedTargetId) {
+                    let targetId = c.memory.committedTargetId;
+                    cache.counts[targetId] = (cache.counts[targetId] || 0) + 1;
+                }
+            }
+        }
+        
+        return cache.counts[sourceId] || 0;
+    },
+    
     run: function(creep) {
-        new RoomVisual(creep.room.name).text('📦', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
-
         const targetRoom = creep.memory.targetRoom || 'W22N56';
         const homeRoom = creep.memory.homeRoom || (Game.spawns['Bob'] ? Game.spawns['Bob'].room.name : creep.room.name);
         const idlePos = creep.memory.idlePos
@@ -17,9 +40,9 @@ let roleBobRemoteHauler = {
 
         if (!isFull) {
             if (creep.room.name !== targetRoom) {
+                creep.memory.committedTargetId = null;
                 creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
-                    reusePath: 15,
-                    visualizePathStyle: { stroke: '#ffaa00' }
+                    reusePath: 15
                 });
                 return;
             }
@@ -27,7 +50,7 @@ let roleBobRemoteHauler = {
             let powerDrop = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: r => r.resourceType === RESOURCE_POWER });
             if (powerDrop && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
                 if (creep.pickup(powerDrop) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, powerDrop, { reusePath: 5, visualizePathStyle: { stroke: '#ff00ff' } });
+                    creepMovement.moveTo(creep, powerDrop, { reusePath: 5 });
                 }
                 return;
             }
@@ -35,7 +58,7 @@ let roleBobRemoteHauler = {
             let powerTombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, { filter: t => t.store && t.store[RESOURCE_POWER] > 0 });
             if (powerTombstone && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
                 if (creep.withdraw(powerTombstone, RESOURCE_POWER) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, powerTombstone, { reusePath: 5, visualizePathStyle: { stroke: '#ff00ff' } });
+                    creepMovement.moveTo(creep, powerTombstone, { reusePath: 5 });
                 }
                 return;
             }
@@ -43,120 +66,125 @@ let roleBobRemoteHauler = {
             let powerRuin = creep.pos.findClosestByPath(FIND_RUINS, { filter: r => r.store && r.store[RESOURCE_POWER] > 0 });
             if (powerRuin && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
                 if (creep.withdraw(powerRuin, RESOURCE_POWER) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, powerRuin, { reusePath: 5, visualizePathStyle: { stroke: '#ff00ff' } });
+                    creepMovement.moveTo(creep, powerRuin, { reusePath: 5 });
                 }
                 return;
             }
 
-            let ruins = creep.room.find(FIND_RUINS, {
-                filter: r => r.store && (r.store[RESOURCE_ENERGY] || 0) > 0
-            });
-            if (ruins.length > 0) {
-                let bestRuin = null;
-                let bestAmount = 0;
-                for (let r of ruins) {
-                    let amount = r.store[RESOURCE_ENERGY] || 0;
-                    if (amount > bestAmount) {
-                        bestAmount = amount;
-                        bestRuin = r;
+            let committedTarget = null;
+            if (creep.memory.committedTargetId) {
+                let target = Game.getObjectById(creep.memory.committedTargetId);
+                if (target) {
+                    let hasEnergy = false;
+                    if (target.structureType === STRUCTURE_CONTAINER || (target.store && !target.structureType)) {
+                        hasEnergy = (target.store && target.store[RESOURCE_ENERGY] || 0) > 0;
+                    } else if (target.resourceType === RESOURCE_ENERGY) {
+                        hasEnergy = target.amount > 0;
                     }
-                }
-                if (bestRuin) {
-                    if (creep.withdraw(bestRuin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, bestRuin, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
+                    
+                    if (hasEnergy) {
+                        committedTarget = target;
+                    } else {
+                        creep.memory.committedTargetId = null;
                     }
-                    return;
+                } else {
+                    creep.memory.committedTargetId = null;
                 }
             }
 
-            let dropsNoContainer = creep.room.find(FIND_DROPPED_RESOURCES, {
-                filter: r => {
-                    if (r.resourceType !== RESOURCE_ENERGY || r.amount <= 0) return false;
-                    let structs = r.pos.lookFor(LOOK_STRUCTURES);
-                    return !structs.some(s => s.structureType === STRUCTURE_CONTAINER);
-                }
-            });
-            if (dropsNoContainer.length > 0) {
-                let bestDrop = null;
-                let bestAmount = 0;
-                for (let d of dropsNoContainer) {
-                    if (d.amount > bestAmount) {
-                        bestAmount = d.amount;
-                        bestDrop = d;
+            if (committedTarget) {
+                if (committedTarget.structureType === STRUCTURE_CONTAINER || (committedTarget.store && !committedTarget.structureType)) {
+                    if (creep.withdraw(committedTarget, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
+                    }
+                } else {
+                    if (creep.pickup(committedTarget) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
                     }
                 }
-                if (bestDrop) {
-                    if (creep.pickup(bestDrop) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, bestDrop, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
-                    }
-                    return;
-                }
+                return;
             }
 
-            let dropsWithContainer = creep.room.find(FIND_DROPPED_RESOURCES, {
-                filter: r => {
-                    if (r.resourceType !== RESOURCE_ENERGY || r.amount <= 0) return false;
-                    let structs = r.pos.lookFor(LOOK_STRUCTURES);
-                    let container = structs.find(s => s.structureType === STRUCTURE_CONTAINER && s.store);
-                    if (!container) return false;
-                    let contEnergy = container.store[RESOURCE_ENERGY] || 0;
-                    return contEnergy < r.amount;
-                }
-            });
-            if (dropsWithContainer.length > 0) {
-                let bestDrop = null;
-                let bestAmount = 0;
-                for (let d of dropsWithContainer) {
-                    if (d.amount > bestAmount) {
-                        bestAmount = d.amount;
-                        bestDrop = d;
-                    }
-                }
-                if (bestDrop) {
-                    if (creep.pickup(bestDrop) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, bestDrop, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
-                    }
-                    return;
-                }
-            }
+            let allSources = [];
 
             let containers = creep.room.find(FIND_STRUCTURES, {
                 filter: s => s.structureType === STRUCTURE_CONTAINER && (s.store[RESOURCE_ENERGY] || 0) > 0
             });
-            if (containers.length > 0) {
-                let bestContainer = null;
-                let bestAmount = 0;
-                for (let c of containers) {
-                    let amount = c.store[RESOURCE_ENERGY] || 0;
-                    if (amount > bestAmount) {
-                        bestAmount = amount;
-                        bestContainer = c;
+            for (let c of containers) {
+                allSources.push({
+                    target: c,
+                    amount: c.store[RESOURCE_ENERGY] || 0,
+                    type: 'container',
+                    id: c.id
+                });
+            }
+
+            let drops = creep.room.find(FIND_DROPPED_RESOURCES, {
+                filter: r => r.resourceType === RESOURCE_ENERGY && r.amount > 0
+            });
+            for (let d of drops) {
+                allSources.push({
+                    target: d,
+                    amount: d.amount,
+                    type: 'drop',
+                    id: d.id
+                });
+            }
+
+            let tombstones = creep.room.find(FIND_TOMBSTONES, {
+                filter: t => t.store && (t.store[RESOURCE_ENERGY] || 0) > 0
+            });
+            for (let t of tombstones) {
+                allSources.push({
+                    target: t,
+                    amount: t.store[RESOURCE_ENERGY] || 0,
+                    type: 'tombstone',
+                    id: t.id
+                });
+            }
+
+            if (allSources.length > 0) {
+                for (let source of allSources) {
+                    source.creepsGoing = this.countCreepsGoingToSource(source.id, targetRoom);
+                }
+                
+                allSources.sort((a, b) => {
+                    let aScore = a.amount / Math.max(1, a.creepsGoing + 1);
+                    let bScore = b.amount / Math.max(1, b.creepsGoing + 1);
+                    return bScore - aScore;
+                });
+                
+                let bestSource = allSources[0];
+                creep.memory.committedTargetId = bestSource.id;
+
+                if (bestSource.type === 'container' || bestSource.type === 'tombstone') {
+                    if (creep.withdraw(bestSource.target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
+                    }
+                } else if (bestSource.type === 'drop') {
+                    if (creep.pickup(bestSource.target) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
                     }
                 }
-                if (bestContainer) {
-                    if (creep.withdraw(bestContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, bestContainer, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
-                    }
-                    return;
-                }
+                return;
             }
 
             if (creep.room.name === targetRoom) {
                 const waitPos = new RoomPosition(19, 48, targetRoom);
                 if (!creep.pos.isEqualTo(waitPos)) {
                     creepMovement.moveTo(creep, waitPos, {
-                        reusePath: 10,
-                        visualizePathStyle: { stroke: '#00ff00' }
+                        reusePath: 10
                     });
                 }
                 return;
             }
 
             creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
-                reusePath: 10,
-                visualizePathStyle: { stroke: '#00ff00' }
+                reusePath: 10
             });
         } else {
+            creep.memory.committedTargetId = null;
+            
             let storage = null;
             let bobSpawn = Game.spawns['Bob'];
             if (bobSpawn && bobSpawn.room && bobSpawn.room.storage) {
@@ -168,8 +196,7 @@ let roleBobRemoteHauler = {
             if (storage) {
                 if (creep.room.name !== storage.room.name) {
                     creepMovement.moveTo(creep, storage.pos, {
-                        reusePath: 15,
-                        visualizePathStyle: { stroke: '#ffffff' }
+                        reusePath: 15
                     });
                     return;
                 }
@@ -177,7 +204,7 @@ let roleBobRemoteHauler = {
                 for (let resource in creep.store) {
                     if (creep.store[resource] > 0) {
                         if (creep.transfer(storage, resource) === ERR_NOT_IN_RANGE) {
-                            creepMovement.moveTo(creep, storage, { reusePath: 5, visualizePathStyle: { stroke: '#ffffff' } });
+                            creepMovement.moveTo(creep, storage, { reusePath: 5 });
                         }
                         return;
                     }
@@ -185,8 +212,7 @@ let roleBobRemoteHauler = {
             } else {
                 if (creep.room.name !== homeRoom) {
                     creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
-                        reusePath: 15,
-                        visualizePathStyle: { stroke: '#ffffff' }
+                        reusePath: 15
                     });
                     return;
                 }
@@ -197,7 +223,7 @@ let roleBobRemoteHauler = {
                 })[0];
                 if (spawn && creep.store[RESOURCE_ENERGY] > 0) {
                     if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, spawn, { reusePath: 5, visualizePathStyle: { stroke: '#ffffff' } });
+                        creepMovement.moveTo(creep, spawn, { reusePath: 5 });
                     }
                     return;
                 }
@@ -211,7 +237,7 @@ let roleBobRemoteHauler = {
                     }
                 } else {
                     if (!creep.pos.isEqualTo(idlePos)) {
-                        creepMovement.moveTo(creep, idlePos, { reusePath: 10, visualizePathStyle: { stroke: '#00ffff' } });
+                        creepMovement.moveTo(creep, idlePos, { reusePath: 10 });
                     }
                 }
             }

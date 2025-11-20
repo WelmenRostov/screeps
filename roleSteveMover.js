@@ -3,7 +3,14 @@ const creepMovement = require('./creepMovement');
 let roleSteveMover = {
     /** @param {Creep} creep **/
     run: function(creep) {
-        new RoomVisual(creep.room.name).text('🚚', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
+        let homeRoom = creep.memory.homeRoom || (Game.spawns['Steve'] ? Game.spawns['Steve'].room.name : null);
+        if (homeRoom && creep.room.name !== homeRoom) {
+            creep.memory.committedTargetId = null;
+            creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                reusePath: 20
+            });
+            return;
+        }
 
         if (creep.store.getUsedCapacity() === 0) {
             creep.memory.working = false;
@@ -11,12 +18,13 @@ let roleSteveMover = {
 
         if (creep.store.getFreeCapacity() === 0) {
             creep.memory.working = true;
+            creep.memory.committedTargetId = null;
         }
 
         const reserveContainerPositions = [
-            new RoomPosition(26, 23, creep.room.name),
-            new RoomPosition(27, 23, creep.room.name),
-            new RoomPosition(28, 23, creep.room.name)
+            new RoomPosition(39, 44, creep.room.name),
+            new RoomPosition(38, 44, creep.room.name),
+            new RoomPosition(37, 44, creep.room.name)
         ];
 
         const isReserveContainer = function(pos) {
@@ -117,13 +125,15 @@ let roleSteveMover = {
 
             if (reserveContainers.length > 0 && creep.store[RESOURCE_ENERGY] > 0) {
                 let targetContainer = reserveContainers[0];
-                if (creep.transfer(targetContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, targetContainer, {
-                        reusePath: 5,
-                        visualizePathStyle: { stroke: '#00ff00' }
-                    });
+                if (creep.memory.lastSourceId !== targetContainer.id) {
+                    if (creep.transfer(targetContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, targetContainer, {
+                            reusePath: 5,
+                            visualizePathStyle: { stroke: '#00ff00' }
+                        });
+                    }
+                    return;
                 }
-                return;
             }
 
             let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -193,31 +203,137 @@ let roleSteveMover = {
                 }
             }
 
+            let committedTarget = null;
+            if (creep.memory.committedTargetId) {
+                let target = Game.getObjectById(creep.memory.committedTargetId);
+                if (target) {
+                    let hasEnergy = false;
+                    if (target.structureType === STRUCTURE_CONTAINER || (target.store && !target.structureType)) {
+                        hasEnergy = (target.store && target.store[RESOURCE_ENERGY] || 0) > 0;
+                    } else if (target.resourceType === RESOURCE_ENERGY) {
+                        hasEnergy = target.amount > 0;
+                    }
+                    
+                    if (hasEnergy) {
+                        committedTarget = target;
+                    } else {
+                        creep.memory.committedTargetId = null;
+                    }
+                } else {
+                    creep.memory.committedTargetId = null;
+                }
+            }
+
+            if (committedTarget) {
+                if (committedTarget.structureType === STRUCTURE_CONTAINER || (committedTarget.store && !committedTarget.structureType)) {
+                    if (creep.withdraw(committedTarget, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
+                    }
+                } else {
+                    if (creep.pickup(committedTarget) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
+                    }
+                }
+                return;
+            }
+
             let nearDrop = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, {
                 filter: r => {
-                    if (r.amount <= 0) return false;
+                    if (r.amount <= 0 || r.resourceType !== RESOURCE_ENERGY) return false;
                     let structs = r.pos.lookFor(LOOK_STRUCTURES);
                     return !structs.some(s => s.structureType === STRUCTURE_CONTAINER && s.store);
                 }
             })[0];
             if (nearDrop) {
+                creep.memory.committedTargetId = nearDrop.id;
                 if (creep.pickup(nearDrop) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, nearDrop, { reusePath: 3, visualizePathStyle: { stroke: '#ffaa00' } });
+                    creepMovement.moveTo(creep, nearDrop, { reusePath: 3 });
+                }
+                return;
+            }
+
+            let allSources = [];
+            
+            let drops = creep.room.find(FIND_DROPPED_RESOURCES, {
+                filter: r => {
+                    if (r.amount <= 0 || r.resourceType !== RESOURCE_ENERGY) return false;
+                    let structs = r.pos.lookFor(LOOK_STRUCTURES);
+                    return !structs.some(s => s.structureType === STRUCTURE_CONTAINER && s.store);
+                }
+            });
+            for (let d of drops) {
+                allSources.push({
+                    target: d,
+                    amount: d.amount,
+                    type: 'drop',
+                    id: d.id
+                });
+            }
+
+            let containers = creep.room.find(FIND_STRUCTURES, {
+                filter: s => s.structureType === STRUCTURE_CONTAINER && 
+                    (s.store[RESOURCE_ENERGY] || 0) > 0 &&
+                    !isReserveContainer(s.pos)
+            });
+            for (let c of containers) {
+                allSources.push({
+                    target: c,
+                    amount: c.store[RESOURCE_ENERGY] || 0,
+                    type: 'container',
+                    id: c.id
+                });
+            }
+
+            let tombstones = creep.room.find(FIND_TOMBSTONES, {
+                filter: t => t.store && (t.store[RESOURCE_ENERGY] || 0) > 0
+            });
+            for (let t of tombstones) {
+                allSources.push({
+                    target: t,
+                    amount: t.store[RESOURCE_ENERGY] || 0,
+                    type: 'tombstone',
+                    id: t.id
+                });
+            }
+
+            if (allSources.length > 0) {
+                for (let source of allSources) {
+                    source.creepsGoing = creepMovement.countCreepsGoingToSource(source.id, creep.room.name, 'steveMover');
+                }
+                
+                allSources.sort((a, b) => {
+                    let aScore = a.amount / Math.max(1, a.creepsGoing + 1);
+                    let bScore = b.amount / Math.max(1, b.creepsGoing + 1);
+                    return bScore - aScore;
+                });
+                
+                let bestSource = allSources[0];
+                creep.memory.committedTargetId = bestSource.id;
+
+                if (bestSource.type === 'container' || bestSource.type === 'tombstone') {
+                    if (creep.withdraw(bestSource.target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
+                    }
+                } else if (bestSource.type === 'drop') {
+                    if (creep.pickup(bestSource.target) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
+                    }
                 }
                 return;
             }
 
             let drop = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
                 filter: r => {
-                    if (r.amount <= 0) return false;
+                    if (r.amount <= 0 || r.resourceType !== RESOURCE_ENERGY) return false;
                     let structs = r.pos.lookFor(LOOK_STRUCTURES);
                     return !structs.some(s => s.structureType === STRUCTURE_CONTAINER && s.store);
                 }
             });
 
             if (drop) {
+                creep.memory.committedTargetId = drop.id;
                 if (creep.pickup(drop) === ERR_NOT_IN_RANGE) {
-                    creepMovement.moveTo(creep, drop, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
+                    creepMovement.moveTo(creep, drop, { reusePath: 5 });
                 }
                 return;
             }
@@ -376,6 +492,7 @@ let roleSteveMover = {
 
                 if (reserveContainers.length > 0) {
                     let targetContainer = reserveContainers[0];
+                    creep.memory.lastSourceId = targetContainer.id;
                     if (creep.withdraw(targetContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, targetContainer, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
                     }
@@ -386,11 +503,16 @@ let roleSteveMover = {
                     filter: (s) => s.structureType === STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] > 0
                 });
                 if (storageSource) {
+                    creep.memory.lastSourceId = storageSource.id;
                     if (creep.withdraw(storageSource, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, storageSource, { reusePath: 5, visualizePathStyle: { stroke: '#ffaa00' } });
                     }
                     return;
                 }
+            }
+            
+            if (!needsEnergy) {
+                creep.memory.lastSourceId = null;
             }
         }
     }

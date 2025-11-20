@@ -12,7 +12,7 @@ let roleBobRemoteMiner24 = {
             return;
         }
 
-        creep.memory.role = 'bobMiner';
+        creep.memory.role = 'bobLocalMiner';
     }
 };
 

@@ -19,14 +19,13 @@ const roleBobRepairer = require('./roleBobRepairer');
 const roleBobMover = require('./roleBobMover');
 const roleBobHelper = require('./roleBobHelper');
 const roleBobInvader = require('./roleBobInvader');
-const roleBobInvader24 = require('./roleBobInvader24');
-const roleBobMiner = require('./roleBobMiner');
+const roleBobInvaderW24N56 = require('./roleBobInvaderW24N56');
+const roleBobLocalMiner = require('./roleBobLocalMiner');
 const roleBobRemoteMiner = require('./roleBobRemoteMiner');
-const roleBobRemoteMiner24 = require('./roleBobRemoteMiner24');
+const roleBobRemoteMinerW24N56 = require('./roleBobRemoteMinerW24N56');
 const roleBobRemoteHauler = require('./roleBobRemoteHauler');
-const roleBobRemoteHauler24 = require('./roleBobRemoteHauler24');
+const roleBobRemoteHaulerW24N56 = require('./roleBobRemoteHaulerW24N56');
 const roleBobReserver = require('./roleBobReserver');
-const roleBobAttacker = require('./roleBobAttacker');
 const roleBobHealer = require('./roleBobHealer');
 const roleBobNanny = require('./roleBobNanny');
 const roleAssaultMelee = require('./roleAssaultMelee');
@@ -35,13 +34,18 @@ const roleAssaultHealer = require('./roleAssaultHealer');
 const rolePatrol = require('./rolePatrol');
 const roleMammyDefender = require('./roleMammyDefender');
 const roleMammyHealer = require('./roleMammyHealer');
+const roleMammyNanny = require('./roleMammyNanny');
 const roleMammyRemoteHauler = require('./roleMammyRemoteHauler');
+const roleMammyTauer = require('./roleMammyTauer');
+const roleMammyRanged = require('./roleMammyRanged');
 const roleSteveUpdater = require('./roleSteveUpdater');
 const roleSteveMiner = require('./roleSteveMiner');
 const roleSteveMover = require('./roleSteveMover');
 const roleManager = require('./roleManager');
 const spawnBobManager = require('./spawnBobManager');
 const spawnSteveManager = require('./spawnSteveManager');
+const roleSteveRepairer = require('./roleSteveRepairer');
+const shutdownZone = require('./shutdownZone');
 
 if (!global.__bobPickupPatched) {
     const originalPickup = Creep.prototype.pickup;
@@ -135,15 +139,14 @@ const roleHandlers = {
     bobRepairer: roleBobRepairer,
     bobMover: roleBobMover,
     bobHelper: roleBobHelper,
-    bobMiner: roleBobMiner,
+    bobLocalMiner: roleBobLocalMiner,
     bobInvader: roleBobInvader,
-    bobInvader24: roleBobInvader24,
+    bobInvaderW24N56: roleBobInvaderW24N56,
     bobRemoteMiner: roleBobRemoteMiner,
-    bobRemoteMiner24: roleBobRemoteMiner24,
+    bobRemoteMinerW24N56: roleBobRemoteMinerW24N56,
     bobRemoteHauler: roleBobRemoteHauler,
-    bobRemoteHauler24: roleBobRemoteHauler24,
+    bobRemoteHaulerW24N56: roleBobRemoteHaulerW24N56,
     bobReserver: roleBobReserver,
-    bobAttacker: roleBobAttacker,
     bobHealer: roleBobHealer,
     bobNanny: roleBobNanny,
     assaultMelee: roleAssaultMelee,
@@ -152,36 +155,23 @@ const roleHandlers = {
     patrol: rolePatrol,
     mammyDefender: roleMammyDefender,
     mammyHealer: roleMammyHealer,
+    mammyNanny: roleMammyNanny,
     mammyRemoteHauler: roleMammyRemoteHauler,
+    mammyTauer: roleMammyTauer,
+    mammyRanged: roleMammyRanged,
     steveUpdater: roleSteveUpdater,
     steveMiner: roleSteveMiner,
-    steveMover: roleSteveMover
+    steveMover: roleSteveMover,
+    steveRepairer: roleSteveRepairer
 };
 
-const creepMovement = require('./creepMovement');
-
-let dangerZonesW24N56 = null;
-let dangerZonesCacheTick = 0;
-
-if (Game.rooms['W24N56']) {
-    if (!dangerZonesW24N56 || dangerZonesCacheTick !== Game.time) {
-        dangerZonesW24N56 = creepMovement.getDangerZones('W24N56');
-        dangerZonesCacheTick = Game.time;
-        if (dangerZonesW24N56.length > 0) {
-            creepMovement.visualizeDangerZones('W24N56', dangerZonesW24N56);
-        }
-    }
-}
+shutdownZone.update();
 
 for (let name in Game.creeps) {
     let creep = Game.creeps[name];
     
-    if (creep.room.name === 'W24N56' && dangerZonesW24N56 && dangerZonesW24N56.length > 0) {
-        if (!creepMovement.canBeInZone(creep)) {
-            if (creepMovement.handleDangerZones(creep, dangerZonesW24N56)) {
-                continue;
-            }
-        }
+    if (shutdownZone.handleCreep(creep)) {
+        continue;
     }
     
     let handler = roleHandlers[creep.memory.role];
@@ -226,6 +216,8 @@ spawnBobManager.tick();
 // Логика спавна Steve — вызываем раз в тик
 spawnSteveManager.tick();
 
+
+
 if (!Memory.storageStats) Memory.storageStats = {};
 
 const PERIOD = 3000;
@@ -265,8 +257,8 @@ for (let roomName in Game.rooms) {
     }
     stat.last = currentBalance;
     
-    const elapsed = Game.time - stat.s;
-    
+    const elapsed = Game.time - stat.s ;
+
     if (elapsed >= PERIOD) {
         const Y = currentBalance;
         stat.result = stat.X - Y;
@@ -278,7 +270,7 @@ for (let roomName in Game.rooms) {
     
     const nextUpdate = Math.max(0, PERIOD - (Game.time - stat.s));
     
-    room.visual.text(`${stat.result >= 0 ? '-' : '+'}${stat.result}`, storage.pos.x, storage.pos.y - 1.1, {align: 'center', font: 0.3, color: stat.result >= 0 ? '#ff0000' : '#00ff00'});
+    room.visual.text(`${stat.result >= 0 ? '-' : ''}${stat.result}`*(-1), storage.pos.x, storage.pos.y - 1.1, {align: 'center', font: 0.3, color: stat.result >= 0 ? '#ff0000' : '#00ff00'});
     room.visual.text(`${nextUpdate}`, storage.pos.x, storage.pos.y + 1.2, {align: 'center', font: 0.3, color: '#ffffff'});
     room.visual.text(`+${stat.put}`, storage.pos.x - 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#00ff00'});
     room.visual.text(`-${stat.taken}`, storage.pos.x + 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#ff00' +

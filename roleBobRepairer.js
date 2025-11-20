@@ -1,4 +1,5 @@
 const creepMovement = require('./creepMovement');
+const { isNannyReserveContainer } = require('./variables');
 
 let roleBobRepairer = {
     /** @param {Creep} creep **/
@@ -14,7 +15,7 @@ let roleBobRepairer = {
         }
 
         if (creep.memory.working) {
-            let priorityRampartPos = new RoomPosition(37, 34, creep.room.name);
+            let priorityRampartPos = new RoomPosition(2, 34, creep.room.name);
             let priorityRampart = priorityRampartPos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_RAMPART);
             
             if (priorityRampart && priorityRampart.hits < 3000000) {
@@ -26,8 +27,29 @@ let roleBobRepairer = {
 
             let priorityRampartSite = priorityRampartPos.lookFor(LOOK_CONSTRUCTION_SITES).find(s => s.structureType === STRUCTURE_RAMPART);
             if (priorityRampartSite) {
-                if (creep.build(priorityRampartSite) === ERR_NOT_IN_RANGE) {
+                let buildResult = creep.build(priorityRampartSite);
+                if (buildResult === ERR_NOT_IN_RANGE) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = priorityRampartSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                            return;
+                        }
+                    }
                     creepMovement.moveTo(creep, priorityRampartSite, { visualizePathStyle: { stroke: '#00ff00' } });
+                } else if (buildResult === OK) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = priorityRampartSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad && creep.pos.getRangeTo(nearbyRoad) <= 1) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                        }
+                    }
                 }
                 return;
             }
@@ -36,8 +58,29 @@ let roleBobRepairer = {
                 filter: (s) => s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_RAMPART
             });
             if (constructionSite) {
-                if (creep.build(constructionSite) === ERR_NOT_IN_RANGE) {
+                let buildResult = creep.build(constructionSite);
+                if (buildResult === ERR_NOT_IN_RANGE) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = constructionSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                            return;
+                        }
+                    }
                     creepMovement.moveTo(creep, constructionSite, { visualizePathStyle: { stroke: '#00ff00' } });
+                } else if (buildResult === OK) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = constructionSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad && creep.pos.getRangeTo(nearbyRoad) <= 1) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                        }
+                    }
                 }
                 return;
             }
@@ -46,8 +89,29 @@ let roleBobRepairer = {
                 filter: (s) => s.structureType === STRUCTURE_RAMPART
             });
             if (rampartSite) {
-                if (creep.build(rampartSite) === ERR_NOT_IN_RANGE) {
+                let buildResult = creep.build(rampartSite);
+                if (buildResult === ERR_NOT_IN_RANGE) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = rampartSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                            return;
+                        }
+                    }
                     creepMovement.moveTo(creep, rampartSite, { visualizePathStyle: { stroke: '#00ff00' } });
+                } else if (buildResult === OK) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = rampartSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad && creep.pos.getRangeTo(nearbyRoad) <= 1) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                        }
+                    }
                 }
                 return;
             }
@@ -56,8 +120,29 @@ let roleBobRepairer = {
                 filter: (s) => s.structureType === STRUCTURE_WALL
             });
             if (wallSite) {
-                if (creep.build(wallSite) === ERR_NOT_IN_RANGE) {
+                let buildResult = creep.build(wallSite);
+                if (buildResult === ERR_NOT_IN_RANGE) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = wallSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                            return;
+                        }
+                    }
                     creepMovement.moveTo(creep, wallSite, { visualizePathStyle: { stroke: '#00ff00' } });
+                } else if (buildResult === OK) {
+                    let isOnRoad = creep.pos.lookFor(LOOK_STRUCTURES).some(s => s.structureType === STRUCTURE_ROAD);
+                    if (!isOnRoad) {
+                        let nearbyRoad = wallSite.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_ROAD
+                        })[0];
+                        if (nearbyRoad && creep.pos.getRangeTo(nearbyRoad) <= 1) {
+                            creepMovement.moveTo(creep, nearbyRoad, { visualizePathStyle: { stroke: '#00ff00' } });
+                        }
+                    }
                 }
                 return;
             }
@@ -107,7 +192,7 @@ let roleBobRepairer = {
             }
 
             let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+                filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0 && !isNannyReserveContainer(s.pos, creep.room.name)
             });
 
             if (container) {

@@ -1,6 +1,6 @@
 const creepMovement = require('./creepMovement');
 
-let roleMammyRemoteHauler = {
+let roleBobRemoteHaulerW24N56 = {
     countCreepsGoingToSource: function(sourceId, targetRoom) {
         if (!Memory.remoteHaulers) {
             Memory.remoteHaulers = {};
@@ -16,7 +16,7 @@ let roleMammyRemoteHauler = {
             
             for (let name in Game.creeps) {
                 let c = Game.creeps[name];
-                if (c.memory.role === 'mammyRemoteHauler' && c.memory.committedTargetId) {
+                if (c.memory.role === 'bobRemoteHaulerW24N56' && c.memory.committedTargetId) {
                     let targetId = c.memory.committedTargetId;
                     cache.counts[targetId] = (cache.counts[targetId] || 0) + 1;
                 }
@@ -28,10 +28,14 @@ let roleMammyRemoteHauler = {
     
     run: function(creep) {
         const targetRoom = creep.memory.targetRoom || 'W24N56';
-        const homeRoom = creep.memory.homeRoom || (Game.spawns['Mammy'] ? Game.spawns['Mammy'].room.name : creep.room.name);
+        const homeRoom = creep.memory.homeRoom || (Game.spawns['Bob'] ? Game.spawns['Bob'].room.name : creep.room.name);
+        const idlePos = creep.memory.idlePos
+            ? new RoomPosition(creep.memory.idlePos.x, creep.memory.idlePos.y, creep.memory.idlePos.roomName || homeRoom)
+            : new RoomPosition(28, 48, homeRoom);
         if (!targetRoom || !homeRoom) return;
 
         const isFull = creep.store.getFreeCapacity() === 0;
+        const hasPower = creep.store[RESOURCE_POWER] > 0;
         const hasResources = creep.store.getUsedCapacity() > 0;
 
         if (!isFull) {
@@ -40,6 +44,30 @@ let roleMammyRemoteHauler = {
                 creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
                     reusePath: 15
                 });
+                return;
+            }
+
+            let powerDrop = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, { filter: r => r.resourceType === RESOURCE_POWER });
+            if (powerDrop && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
+                if (creep.pickup(powerDrop) === ERR_NOT_IN_RANGE) {
+                    creepMovement.moveTo(creep, powerDrop, { reusePath: 5 });
+                }
+                return;
+            }
+
+            let powerTombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, { filter: t => t.store && t.store[RESOURCE_POWER] > 0 });
+            if (powerTombstone && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
+                if (creep.withdraw(powerTombstone, RESOURCE_POWER) === ERR_NOT_IN_RANGE) {
+                    creepMovement.moveTo(creep, powerTombstone, { reusePath: 5 });
+                }
+                return;
+            }
+
+            let powerRuin = creep.pos.findClosestByPath(FIND_RUINS, { filter: r => r.store && r.store[RESOURCE_POWER] > 0 });
+            if (powerRuin && creep.store.getFreeCapacity(RESOURCE_POWER) > 0) {
+                if (creep.withdraw(powerRuin, RESOURCE_POWER) === ERR_NOT_IN_RANGE) {
+                    creepMovement.moveTo(creep, powerRuin, { reusePath: 5 });
+                }
                 return;
             }
 
@@ -80,7 +108,7 @@ let roleMammyRemoteHauler = {
             let allSources = [];
 
             let containers = creep.room.find(FIND_STRUCTURES, {
-                filter: s => s.structureType === STRUCTURE_CONTAINER && s.store && (s.store[RESOURCE_ENERGY] || 0) > 0
+                filter: s => s.structureType === STRUCTURE_CONTAINER && (s.store[RESOURCE_ENERGY] || 0) > 0
             });
             for (let c of containers) {
                 allSources.push({
@@ -141,39 +169,80 @@ let roleMammyRemoteHauler = {
                 return;
             }
 
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
-                reusePath: 10
-            });
-        } else if (hasResources) {
-            creep.memory.committedTargetId = null;
-            
-            if (creep.room.name !== homeRoom) {
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
-                    reusePath: 15
-                });
+            if (creep.room.name === targetRoom) {
+                const waitPos = new RoomPosition(19, 48, targetRoom);
+                if (!creep.pos.isEqualTo(waitPos)) {
+                    creepMovement.moveTo(creep, waitPos, {
+                        reusePath: 10
+                    });
+                }
                 return;
             }
 
-            let storage = creep.room.find(FIND_STRUCTURES, {
-                filter: s => s.structureType === STRUCTURE_STORAGE
-            })[0];
+            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+                reusePath: 10
+            });
+        } else {
+            creep.memory.committedTargetId = null;
+            
+            let storage = null;
+            let bobSpawn = Game.spawns['Bob'];
+            if (bobSpawn && bobSpawn.room && bobSpawn.room.storage) {
+                storage = bobSpawn.room.storage;
+            } else if (creep.room.storage) {
+                storage = creep.room.storage;
+            }
 
             if (storage) {
-                for (let resourceType in creep.store) {
-                    if (creep.transfer(storage, resourceType) === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, storage, {
-                            reusePath: 5
-                        });
+                if (creep.room.name !== storage.room.name) {
+                    creepMovement.moveTo(creep, storage.pos, {
+                        reusePath: 15
+                    });
+                    return;
+                }
+
+                for (let resource in creep.store) {
+                    if (creep.store[resource] > 0) {
+                        if (creep.transfer(storage, resource) === ERR_NOT_IN_RANGE) {
+                            creepMovement.moveTo(creep, storage, { reusePath: 5 });
+                        }
                         return;
                     }
                 }
             } else {
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
-                    reusePath: 10
-                });
+                if (creep.room.name !== homeRoom) {
+                    creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                        reusePath: 15
+                    });
+                    return;
+                }
+
+                let spawn = creep.room.find(FIND_MY_STRUCTURES, {
+                    filter: s => (s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION) &&
+                        s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+                })[0];
+                if (spawn && creep.store[RESOURCE_ENERGY] > 0) {
+                    if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, spawn, { reusePath: 5 });
+                    }
+                    return;
+                }
+
+                if (hasResources) {
+                    for (let resource in creep.store) {
+                        if (creep.store[resource] > 0) {
+                            creep.drop(resource);
+                            break;
+                        }
+                    }
+                } else {
+                    if (!creep.pos.isEqualTo(idlePos)) {
+                        creepMovement.moveTo(creep, idlePos, { reusePath: 10 });
+                    }
+                }
             }
         }
     }
 };
 
-module.exports = roleMammyRemoteHauler;
+module.exports = roleBobRemoteHaulerW24N56;

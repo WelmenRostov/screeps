@@ -12,39 +12,48 @@ let spawnBobManager = {
         ];
 
         const minRoles = {
-            bobNanny: 2,
-            bobMover: 4,
-            bobHelper: 0,
-            bobMiner: 1,
+            bobNanny: 100,
+            bobLocalMiner: 950,
+            bobMover: 2400,
+
+
+            bobRemoteHaulerW24N56: 2000,
+            bobRemoteMinerW24N56: 2000,
+            bobInvaderW24N56: 100,
+
+            bobRemoteHauler: 0,
             bobHarvester: 1,
-            bobRepairer: 0,
+            bobRepairer: 1,
+
+
+           /*
+            bobRemoteHaulerW24N56: 1,
+            bobHealer: 1,
+            bobRemoteMinerW24N56: 2,
+            bobRemoteHaulerW24N56: 1,
+            bobHelper: 0,
             bobInvader: 0,
             bobRemoteMiner: 0,
-            bobRemoteHauler: 0,
-            bobReserver: 0,
-            bobAttacker: 0,
-            bobInvader24: 0,
-            bobHealer: 0,
-            bobRemoteMiner24: 0,
-            bobRemoteHauler24: 0,
+            bobReserver: 0
+            */
         };
 
         const roleSum = {
+
+            bobNanny: 0,
+            bobLocalMiner: 0,
             bobHarvester: 0,
             bobRepairer: 0,
             bobMover: 0,
             bobHelper: 0,
-            bobMiner: 0,
-            bobNanny: 0,
             bobInvader: 0,
             bobRemoteMiner: 0,
+            bobRemoteMinerW24N56: 0,
             bobRemoteHauler: 0,
+            bobRemoteHaulerW24N56: 0,
             bobReserver: 0,
-            bobAttacker: 0,
             bobHealer: 0,
-            bobInvader24: 0,
-            bobRemoteMiner24: 0,
-            bobRemoteHauler24: 0
+            bobInvaderW24N56: 0
         };
 
         const allCreeps = Object.values(Game.creeps);
@@ -64,13 +73,6 @@ let spawnBobManager = {
             }
         }
 
-        const hasAttacker = allCreeps.some(c => c.memory.role === 'bobAttacker');
-        if (hasEnemies && enemyRoom && !hasAttacker) {
-            if (!spawn.spawning) {
-                if (this.spawnBobAttacker(enemyRoom) === OK) return;
-            }
-            return;
-        }
 
         let mammySpawn = Game.spawns['Mammy'];
         let mammyHasProblems = false;
@@ -90,64 +92,118 @@ let spawnBobManager = {
                 }
             }
         }
-
-        if (roleSum.bobNanny < minRoles.bobNanny * 600 && !spawn.spawning) {
+        /*==========================================================*/
+        if (roleSum.bobNanny < minRoles.bobNanny && !spawn.spawning) {
             if (this.spawnNanny() === OK) return;
         }
 
-        if (mammyHasProblems && roleSum.bobHelper < minRoles.bobHelper * timeLife) {
-            if (this.spawnHelper() === OK) return;
+        let hasNanny = roleSum.bobNanny >= minRoles.bobNanny;
+
+        if (hasNanny) {
+
+            if (roleSum.bobLocalMiner < minRoles.bobLocalMiner && !spawn.spawning) {
+                if (this.spawnMiner() === OK) return;
+            }
+
+            let hasLocalMiner = roleSum.bobLocalMiner >= minRoles.bobLocalMiner;
+
+            if (hasLocalMiner) {
+
+                if (roleSum.bobMover < minRoles.bobMover && !spawn.spawning) {
+                    if (this.spawnMover() === OK) return;
+                }
+
+                let hasMover = roleSum.bobMover >= minRoles.bobMover;
+
+                if (hasMover) {
+
+                    if (roleSum.bobRemoteMinerW24N56 < minRoles.bobRemoteMinerW24N56 && !spawn.spawning) {
+                        if (this.spawnRemoteMinerW24N56('W24N56', remotePositions) === OK) return;
+                    }
+
+                    let hasRemoteMinerW24N56 = roleSum.bobRemoteMinerW24N56 >= minRoles.bobRemoteMinerW24N56;
+
+                    if (hasRemoteMinerW24N56) {
+                        if (roleSum.bobInvaderW24N56 < minRoles.bobInvaderW24N56 && !spawn.spawning) {
+                            if (this.spawnInvaderW24N56() === OK) return;
+                        }
+
+                        let hasInvaderW24N56 = roleSum.bobInvaderW24N56 >= minRoles.bobInvaderW24N56;
+
+                        if (hasInvaderW24N56) {
+                            if (roleSum.bobRemoteHaulerW24N56 < minRoles.bobRemoteHaulerW24N56 && !spawn.spawning) {
+                                if (this.spawnRemoteHaulerW24N56('W24N56') === OK) return;
+                            }
+
+                            if (roleSum.bobHarvester <  minRoles.bobHarvester && !spawn.spawning) {
+                                if (this.spawnHarvester() === OK) return;
+                            }
+
+                            if (roleSum.bobRepairer < minRoles.bobRepairer && !spawn.spawning) {
+                                if (this.spawnRepairer() === OK) return;
+                            }
+
+                            if (roleSum.bobHealer < (minRoles.bobHealer || 0) * 400 && !spawn.spawning) {
+                                if (this.spawnHealer() === OK) return;
+                            }
+
+                            if (mammyHasProblems && roleSum.bobHelper < (minRoles.bobHelper || 0) * timeLife && !spawn.spawning) {
+                                if (this.spawnHelper() === OK) return;
+                            }
+
+                            if (roleSum.bobInvader < (minRoles.bobInvader || 0) * 1 && !spawn.spawning) {
+                                if (this.spawnInvader() === OK) return;
+                            }
+
+                            if (roleSum.bobRemoteMiner < (minRoles.bobRemoteMiner || 0) * 200 && !spawn.spawning) {
+                                if (this.spawnRemoteMiner(remoteTargetRoom, remotePositions) === OK) return;
+                            }
+
+                            if (roleSum.bobRemoteHauler < (minRoles.bobRemoteHauler || 0) * 600 && !spawn.spawning) {
+                                if (this.spawnRemoteHauler(remoteTargetRoom) === OK) return;
+                            }
+
+                            if (roleSum.bobReserver < (minRoles.bobReserver || 0) * 200 && !spawn.spawning) {
+                                if (this.spawnReserver(remoteTargetRoom) === OK) return;
+                            }
+                        }
+                    }
+                }
+            }
         }
-
-        if (roleSum.bobMover < minRoles.bobMover * 800 && !spawn.spawning) {
-            if (this.spawnMover() === OK) return;
+        
+        if (!spawn.spawning) {
+            let needsSpawn = false;
+            let hasNanny = roleSum.bobNanny >= minRoles.bobNanny;
+            let hasLocalMiner = hasNanny && roleSum.bobLocalMiner >= minRoles.bobLocalMiner;
+            let hasMover = hasLocalMiner && roleSum.bobMover >= minRoles.bobMover;
+            let hasRemoteMinerW24N56 = hasMover && roleSum.bobRemoteMinerW24N56 >= minRoles.bobRemoteMinerW24N56;
+            let hasInvaderW24N56 = hasRemoteMinerW24N56 && roleSum.bobInvaderW24N56 >= minRoles.bobInvaderW24N56;
+            
+            if (roleSum.bobNanny < minRoles.bobNanny) needsSpawn = true;
+            if (!needsSpawn && hasNanny && roleSum.bobLocalMiner < minRoles.bobLocalMiner) needsSpawn = true;
+            if (!needsSpawn && hasLocalMiner && roleSum.bobMover < minRoles.bobMover) needsSpawn = true;
+            if (!needsSpawn && hasMover && roleSum.bobRemoteMinerW24N56 < minRoles.bobRemoteMinerW24N56) needsSpawn = true;
+            if (!needsSpawn && hasRemoteMinerW24N56 && roleSum.bobInvaderW24N56 < minRoles.bobInvaderW24N56) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobRemoteHaulerW24N56 < minRoles.bobRemoteHaulerW24N56) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobHarvester < minRoles.bobHarvester) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobRepairer < minRoles.bobRepairer) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobHealer < (minRoles.bobHealer || 0) * 400) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && mammyHasProblems && roleSum.bobHelper < (minRoles.bobHelper || 0) * timeLife) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobInvader < (minRoles.bobInvader || 0) * 1) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobRemoteMiner < (minRoles.bobRemoteMiner || 0) * 200) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobRemoteHauler < (minRoles.bobRemoteHauler || 0) * 600) needsSpawn = true;
+            if (!needsSpawn && hasInvaderW24N56 && roleSum.bobReserver < (minRoles.bobReserver || 0) * 200) needsSpawn = true;
+            
+            if (needsSpawn) {
+                spawn.memory.rejuvenationMode = false;
+            } else {
+                spawn.memory.rejuvenationMode = true;
+            }
+        } else {
+            spawn.memory.rejuvenationMode = false;
         }
-
-        if (roleSum.bobMiner < minRoles.bobMiner * 990 && !spawn.spawning) {
-            if (this.spawnMiner() === OK) return;
-        }
-
-        if (roleSum.bobHarvester < minRoles.bobHarvester * 100 && !spawn.spawning) {
-            if (this.spawnHarvester() === OK) return;
-        }
-
-        if (roleSum.bobInvader24 < minRoles.bobInvader24 * 60 && !spawn.spawning) {
-            if (this.spawnInvader24() === OK) return;
-        }
-
-        if (roleSum.bobRepairer < minRoles.bobRepairer * 300 && !spawn.spawning) {
-            if (this.spawnRepairer() === OK) return;
-        }
-
-        if (roleSum.bobInvader < minRoles.bobInvader * 1 && !spawn.spawning) {
-            if (this.spawnInvader() === OK) return;
-        }
-
-
-        if (roleSum.bobRemoteMiner24 < minRoles.bobRemoteMiner24 * 600 && !spawn.spawning) {
-            if (this.spawnRemoteMiner24('W24N56', remotePositions) === OK) return;
-        }
-
-        if (roleSum.bobRemoteMiner < minRoles.bobRemoteMiner * 200 && !spawn.spawning) {
-            if (this.spawnRemoteMiner(remoteTargetRoom, remotePositions) === OK) return;
-        }
-
-        if (roleSum.bobRemoteHauler24 < minRoles.bobRemoteHauler24 * 600 && !spawn.spawning) {
-            if (this.spawnRemoteHauler24('W24N56') === OK) return;
-        }
-
-        if (roleSum.bobRemoteHauler < minRoles.bobRemoteHauler * 1400 && !spawn.spawning) {
-            if (this.spawnRemoteHauler(remoteTargetRoom) === OK) return;
-        }
-
-
-        if (roleSum.bobReserver < minRoles.bobReserver * 200 && !spawn.spawning) {
-            if (this.spawnReserver(remoteTargetRoom) === OK) return;
-        }
-
-        if (roleSum.bobHealer < minRoles.bobHealer * 1500 && !spawn.spawning) {
-            if (this.spawnHealer() === OK) return;
-        }
+        /*==========================================================*/
     },
 
     spawnHarvester: function() {
@@ -184,15 +240,14 @@ let spawnBobManager = {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
 
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
+        let body = [];
+
+        body.push(...Array(10).fill(MOVE));
+        body.push(...Array(20).fill(CARRY));
 
         let homeRoom = spawn.room.name;
         let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
-        return spawn.spawnCreep(body, name, { memory: { role: 'bobMover' } });
+        return spawn.spawnCreep(body, name, { memory: { role: 'bobMover', homeRoom: homeRoom } });
     },
 
     spawnHelper: function() {
@@ -220,13 +275,13 @@ let spawnBobManager = {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
         let body = [
-            WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK,
-            MOVE, MOVE, MOVE, MOVE
+            WORK, WORK, WORK, WORK, WORK,
+            MOVE, MOVE, MOVE, MOVE, MOVE
         ];
 
         let homeRoom = spawn.room.name;
         let name = 'Miner_' + spawn.name + '_' + homeRoom + '_' + Game.time;
-        return spawn.spawnCreep(body, name, { memory: { role: 'bobMiner' } });
+        return spawn.spawnCreep(body, name, { memory: { role: 'bobLocalMiner' } });
     },
 
     spawnInvader: function() {
@@ -242,7 +297,7 @@ let spawnBobManager = {
         return spawn.spawnCreep(body, name, { memory: { role: 'bobInvader', homeRoom: spawn.room.name, targetRoom } });
     },
 
-    spawnInvader24: function() {
+    spawnInvaderW24N56: function() {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
         let body = [
@@ -252,7 +307,7 @@ let spawnBobManager = {
         ];
         let targetRoom = 'W24N56';
         let name = 'Invader_' + spawn.name + '_' + targetRoom + '_' + Game.time;
-        return spawn.spawnCreep(body, name, { memory: { role: 'bobInvader24', homeRoom: spawn.room.name, targetRoom } });
+        return spawn.spawnCreep(body, name, { memory: { role: 'bobInvaderW24N56', homeRoom: spawn.room.name, targetRoom } });
     },
 
     spawnRemoteMiner: function(targetRoom, fixedPositions) {
@@ -272,17 +327,17 @@ let spawnBobManager = {
         });
     },
 
-    spawnRemoteMiner24: function(targetRoom, fixedPositions) {
+    spawnRemoteMinerW24N56: function(targetRoom, fixedPositions) {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
         let body = [
-            WORK, WORK, WORK, WORK, WORK, WORK, WORK,
-            MOVE, MOVE, MOVE,
+            WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK,
+            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
         ];
         let name = 'RemoteMiner_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
             memory: {
-                role: 'bobRemoteMiner24',
+                role: 'bobRemoteMinerW24N56',
                 targetRoom,
                 fixedPositions
             }
@@ -307,18 +362,18 @@ let spawnBobManager = {
         });
     },
 
-    spawnRemoteHauler24: function(targetRoom) {
+    spawnRemoteHaulerW24N56: function(targetRoom) {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
+        let body = [];
+
+        body.push(...Array(11).fill(MOVE));
+        body.push(...Array(22).fill(CARRY));
+
         let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
             memory: {
-                role: 'bobRemoteHauler24',
+                role: 'bobRemoteHaulerW24N56',
                 targetRoom,
                 homeRoom: spawn.room.name
             }
@@ -338,22 +393,6 @@ let spawnBobManager = {
         });
     },
 
-    spawnBobAttacker: function(targetRoom) {
-        let spawn = Game.spawns['Bob'];
-        if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK
-        ];
-        let name = 'Attacker_' + spawn.name + '_' + targetRoom + '_' + Game.time;
-        return spawn.spawnCreep(body, name, {
-            memory: {
-                role: 'bobAttacker',
-                homeRoom: spawn.room.name,
-                targetRoom
-            }
-        });
-    },
 
     spawnHealer: function() {
         let spawn = Game.spawns['Bob'];
@@ -378,11 +417,12 @@ let spawnBobManager = {
     spawnNanny: function() {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
+
+        let body = [];
+
+        body.push(...Array(11).fill(MOVE));
+        body.push(...Array(22).fill(CARRY));
+
         let homeRoom = spawn.room.name;
         let name = 'Nanny_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {

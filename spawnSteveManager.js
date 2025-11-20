@@ -6,16 +6,19 @@ let spawnSteveManager = {
         if (!spawn || spawn.spawning) return;
 
         const minRoles = {
-            steveUpdater: 2,
-            steveMiner: 2,
-            steveMover: 2
+            steveUpdater: 100,
+            steveMiner: 1200,
+            steveMover: 100,
+            steveRepairer: 100,
         };
 
         const roleSum = {
             steveUpdater: 0,
             steveMiner: 0,
-            steveMover: 0
+            steveMover: 0,
+            steveRepairer: 0
         };
+
 
         const allCreeps = Object.values(Game.creeps);
         for (let c of allCreeps) {
@@ -24,24 +27,42 @@ let spawnSteveManager = {
             }
         }
 
-        if (roleSum.steveMiner < minRoles.steveMiner * 600 && !spawn.spawning) {
-            this.spawnMiner();
+
+
+        if (roleSum.steveMover < minRoles.steveMover && !spawn.spawning) {
+            if (this.spawnMover() === OK) return;
         }
 
-        if (roleSum.steveMover < minRoles.steveMover * 800 && !spawn.spawning) {
-            this.spawnMover();
-        }
+        let hasEnoughMover = roleSum.steveMover >= minRoles.steveMover;
 
-        if (roleSum.steveUpdater < minRoles.steveUpdater * timeLife && !spawn.spawning) {
-            this.spawnUpdater();
+        if (hasEnoughMover) {
+            if (roleSum.steveMiner < minRoles.steveMiner && !spawn.spawning) {
+                if (this.spawnMiner() === OK) return;
+            }
+
+            let hasEnoughMiner = roleSum.steveMiner >= minRoles.steveMiner;
+
+            if (hasEnoughMiner) {
+                if (roleSum.steveUpdater < minRoles.steveUpdater && !spawn.spawning) {
+                    if (this.spawnUpdater() === OK) return;
+                }
+
+                if (roleSum.steveRepairer < minRoles.steveRepairer && !spawn.spawning) {
+                    if (this.spawnRepairer() === OK) return;
+                }
+            }
         }
     },
 
     spawnUpdater: function() {
         let spawn = Game.spawns['Steve'];
         if (!spawn) return ERR_INVALID_TARGET;
-        
-        let body = [WORK, WORK, WORK, WORK, MOVE, CARRY, CARRY, CARRY, CARRY];
+
+        let body = [];
+        body.push(...Array(10).fill(WORK));
+        body.push(...Array(5).fill(CARRY));
+        body.push(...Array(1).fill(MOVE));
+
         let homeRoom = spawn.room.name;
         let name = 'Updater_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         
@@ -56,9 +77,12 @@ let spawnSteveManager = {
     spawnMiner: function() {
         let spawn = Game.spawns['Steve'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            WORK, WORK, WORK, WORK, WORK, MOVE,  MOVE, MOVE
-        ];
+
+
+        let body = [];
+        body.push(...Array(6).fill(WORK));
+        body.push(...Array(3).fill(MOVE));
+
         let homeRoom = spawn.room.name;
         let name = 'Miner_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
@@ -72,10 +96,11 @@ let spawnSteveManager = {
     spawnMover: function() {
         let spawn = Game.spawns['Steve'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE,  CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
+        let body = [];
+
+        body.push(...Array(14).fill(CARRY));
+        body.push(...Array(7).fill(MOVE));
+
         let homeRoom = spawn.room.name;
         let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
@@ -84,7 +109,28 @@ let spawnSteveManager = {
                 homeRoom: homeRoom
             }
         });
-    }
+    },
+
+    spawnRepairer: function() {
+        let spawn = Game.spawns['Steve'];
+        if (!spawn) return ERR_INVALID_TARGET;
+
+        let body = [];
+        body.push(...Array(5).fill(WORK));
+        body.push(...Array(8).fill(CARRY));
+        body.push(...Array(8).fill(MOVE));
+
+        let homeRoom = spawn.room.name;
+        let name = 'Repairer_' + spawn.name + '_' + homeRoom + '_' + Game.time;
+
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'steveRepairer',
+                homeRoom: homeRoom
+            }
+        });
+    },
+
 };
 
 module.exports = spawnSteveManager;

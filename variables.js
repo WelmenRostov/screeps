@@ -10,8 +10,18 @@ const parametrCrepps = {
 
 const timeLife = 800;
 
+const isNannyReserveContainer = function(pos, roomName) {
+    const nannyReservePositions = [
+        { x: 26, y: 23 },
+        { x: 27, y: 23 },
+        { x: 28, y: 23 }
+    ];
+    return nannyReservePositions.some(rp => rp.x === pos.x && rp.y === pos.y);
+};
+
 // Экспортим всё одним объектом
 module.exports = {
   parametrCrepps,
-  timeLife
+  timeLife,
+  isNannyReserveContainer
 };

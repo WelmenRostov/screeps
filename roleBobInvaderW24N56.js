@@ -1,6 +1,6 @@
 const creepMovement = require('./creepMovement');
 
-let roleBobInvader24 = {
+let roleBobInvaderW24N56 = {
     run: function(creep) {
         new RoomVisual(creep.room.name).text('🏗️', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
@@ -189,6 +189,6 @@ let roleBobInvader24 = {
     }
 };
 
-module.exports = roleBobInvader24;
+module.exports = roleBobInvaderW24N56;
 
 

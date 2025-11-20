@@ -1,4 +1,5 @@
 const creepMovement = require('./creepMovement');
+const { isNannyReserveContainer } = require('./variables');
 
 let roleBuilder = {
     /** @param {Creep} creep **/
@@ -98,7 +99,7 @@ let roleBuilder = {
 	    }
 
 	    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-		filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+		filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0 && !isNannyReserveContainer(s.pos, creep.room.name)
 	    });
 
 	    if (container) {

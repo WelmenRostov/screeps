@@ -1,15 +1,14 @@
 const creepMovement = require('./creepMovement');
+const { isNannyReserveContainer } = require('./variables');
 
 let roleBobNanny = {
     run: function(creep) {
-        new RoomVisual(creep.room.name).text('👶', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
         const homeRoom = creep.memory.homeRoom || (Game.spawns['Bob'] ? Game.spawns['Bob'].room.name : creep.room.name);
         
         if (homeRoom && creep.room.name !== homeRoom) {
             creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
                 reusePath: 10,
-                visualizePathStyle: { stroke: '#ff0000' }
             });
             return;
         }
@@ -29,7 +28,6 @@ let roleBobNanny = {
                 if (creep.transfer(spawn, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creepMovement.moveTo(creep, spawn, {
                         reusePath: 5,
-                        visualizePathStyle: { stroke: '#00ff00' }
                     });
                 }
             } else {
@@ -45,7 +43,6 @@ let roleBobNanny = {
                         if (result === ERR_NOT_IN_RANGE) {
                             creepMovement.moveTo(creep, target, {
                                 reusePath: 5,
-                                visualizePathStyle: { stroke: '#ff00ff' }
                             });
                         } else if (result === OK || result === ERR_FULL) {
                             // Успешно заполнили или уже полон - ничего не делаем, переходим к следующему тику
@@ -64,20 +61,38 @@ let roleBobNanny = {
                         if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                             creepMovement.moveTo(creep, target, {
                                 reusePath: 5,
-                                visualizePathStyle: { stroke: '#00ffff' }
                             });
                         }
                     }
                 } else {
-                    // Если все заполнено, ждем в центре комнаты
-                    creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
-                        reusePath: 10,
-                        visualizePathStyle: { stroke: '#ffffff' }
-                    });
+                    let spawn = Game.spawns['Bob'];
+                    if (spawn && spawn.memory.rejuvenationMode && creep.ticksToLive < 1400 && spawn.energy > 0) {
+                        if (creep.pos.getRangeTo(spawn) > 1) {
+                            creepMovement.moveTo(creep, spawn, {
+                                reusePath: 5,
+                                range: 1
+                            });
+                        } else {
+                            if (spawn.energy > 0 && creep.ticksToLive < 1400) {
+                                spawn.renewCreep(creep);
+                            }
+                        }
+                    } else {
+                        creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                            reusePath: 10,
+                        });
+                    }
                 }
             }
         } else {
-            // Берем энергию из сторгейта
+            const nannyReservePositions = [
+                { x: 26, y: 23 },
+                { x: 27, y: 23 },
+                { x: 28, y: 23 }
+            ];
+            
+            let reserveContainerPositions = nannyReservePositions.map(rp => new RoomPosition(rp.x, rp.y, homeRoom));
+
             let storage = creep.room.find(FIND_STRUCTURES, {
                 filter: s => s.structureType === STRUCTURE_STORAGE && s.store && s.store[RESOURCE_ENERGY] > 0
             })[0];
@@ -86,15 +101,25 @@ let roleBobNanny = {
                 if (creep.withdraw(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creepMovement.moveTo(creep, storage, {
                         reusePath: 5,
-                        visualizePathStyle: { stroke: '#ffaa00' }
                     });
                 }
             } else {
-                // Если нет сторгейта, ждем в центре комнаты
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
-                    reusePath: 10,
-                    visualizePathStyle: { stroke: '#ffffff' }
-                });
+                let reserveContainers = reserveContainerPositions.map(rp => {
+                    return rp.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER && s.store && s.store[RESOURCE_ENERGY] > 0);
+                }).filter(c => c);
+
+                if (reserveContainers.length > 0) {
+                    let targetContainer = reserveContainers[0];
+                    if (creep.withdraw(targetContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creepMovement.moveTo(creep, targetContainer, {
+                            reusePath: 5,
+                        });
+                    }
+                } else {
+                    creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                        reusePath: 10,
+                    });
+                }
             }
         }
     }

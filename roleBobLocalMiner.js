@@ -1,6 +1,6 @@
 const creepMovement = require('./creepMovement');
 
-let roleBobMiner = {
+let roleBobLocalMiner = {
     run: function(creep) {
         new RoomVisual(creep.room.name).text('⛏️', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
@@ -201,5 +201,5 @@ let roleBobMiner = {
     }
 };
 
-module.exports = roleBobMiner;
+module.exports = roleBobLocalMiner;
 

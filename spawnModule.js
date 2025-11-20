@@ -129,8 +129,8 @@ const spawnModule = {
 
 	let body = [];
 	body.push(...Array(25).fill(TOUGH));
-	body.push(...Array(17).fill(MOVE));
 	body.push(...Array(8).fill(RANGED_ATTACK));
+	body.push(...Array(17).fill(MOVE));
 
 	let name = 'Rat_' + spawn.name + '_' + targetRoom + '_' + Game.time;
 	let memory = { role: 'rat', targetRoom, homeRoom: spawn.room.name };
