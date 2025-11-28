@@ -8,7 +8,7 @@ let roleInvader = {
         new RoomVisual(creep.room.name).text('🏗️', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
         // Целевая комната
-        const targetRoom = 'W22N56';
+        const targetRoom = 'W19N56';
         const homeRoom = creep.memory.homeRoom || creep.room.name;
 
         if (creep.store[RESOURCE_ENERGY] === 0) {

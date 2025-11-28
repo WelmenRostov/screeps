@@ -5,26 +5,30 @@ let spawnBobManager = {
         let spawn = Game.spawns['Bob'];
         if (!spawn || spawn.spawning) return;
 
-        const remoteTargetRoom = 'W22N56';
+        const remoteTargetRoom = 'W22N55';
+        const remoteTargetRoom2 = 'W19N55';
         const remotePositions = [
             { x: 19, y: 41, roomName: remoteTargetRoom },
             { x: 40, y: 41, roomName: remoteTargetRoom }
         ];
 
         const minRoles = {
-            bobNanny: 100,
+            bobNanny: 700,
             bobLocalMiner: 950,
-            bobMover: 2400,
+            bobMover: 1200,
 
-
-            bobRemoteHaulerW24N56: 2000,
-            bobRemoteMinerW24N56: 2000,
-            bobInvaderW24N56: 100,
 
             bobRemoteHauler: 0,
             bobHarvester: 1,
             bobRepairer: 1,
 
+            //Блок захвата
+            bobRemoteHaulerW24N56: 2000, //2000
+            bobRemoteMinerW24N56: 2000, //2000
+            bobInvaderW24N56: 100, //100
+
+            bobReserver: 0,
+            bobInvader: 0,
 
            /*
             bobRemoteHaulerW24N56: 1,
@@ -151,7 +155,7 @@ let spawnBobManager = {
                                 if (this.spawnHelper() === OK) return;
                             }
 
-                            if (roleSum.bobInvader < (minRoles.bobInvader || 0) * 1 && !spawn.spawning) {
+                            if (roleSum.bobInvader < minRoles.bobInvader && !spawn.spawning) {
                                 if (this.spawnInvader() === OK) return;
                             }
 
@@ -163,7 +167,7 @@ let spawnBobManager = {
                                 if (this.spawnRemoteHauler(remoteTargetRoom) === OK) return;
                             }
 
-                            if (roleSum.bobReserver < (minRoles.bobReserver || 0) * 200 && !spawn.spawning) {
+                            if (roleSum.bobReserver < minRoles.bobReserver && !spawn.spawning){
                                 if (this.spawnReserver(remoteTargetRoom) === OK) return;
                             }
                         }
@@ -239,11 +243,10 @@ let spawnBobManager = {
     spawnMover: function() {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
-
         let body = [];
 
-        body.push(...Array(10).fill(MOVE));
-        body.push(...Array(20).fill(CARRY));
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(30).fill(CARRY));
 
         let homeRoom = spawn.room.name;
         let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
@@ -287,14 +290,14 @@ let spawnBobManager = {
     spawnInvader: function() {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            WORK, WORK, WORK, WORK, WORK, WORK,
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
-        let targetRoom = 'W22N56';
-        let name = 'Invader_' + spawn.name + '_' + targetRoom + '_' + Game.time;
-        return spawn.spawnCreep(body, name, { memory: { role: 'bobInvader', homeRoom: spawn.room.name, targetRoom } });
+        let body = [];
+
+        body.push(...Array(5).fill(WORK));
+        body.push(...Array(10).fill(MOVE));
+        body.push(...Array(10).fill(CARRY));
+        let remoteTargetRoom2 = 'W19N55';
+        let name = 'Invader_' + spawn.name + '_' + remoteTargetRoom2 + '_' + Game.time;
+        return spawn.spawnCreep(body, name, { memory: { role: 'bobInvader', homeRoom: spawn.room.name, remoteTargetRoom2 } });
     },
 
     spawnInvaderW24N56: function() {
@@ -347,11 +350,11 @@ let spawnBobManager = {
     spawnRemoteHauler: function(targetRoom) {
         let spawn = Game.spawns['Bob'];
         if (!spawn) return ERR_INVALID_TARGET;
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
+        let body = [];
+
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(30).fill(CARRY));
+
         let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
             memory: {
@@ -367,8 +370,8 @@ let spawnBobManager = {
         if (!spawn) return ERR_INVALID_TARGET;
         let body = [];
 
-        body.push(...Array(11).fill(MOVE));
-        body.push(...Array(22).fill(CARRY));
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(30).fill(CARRY));
 
         let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {

@@ -1,8 +1,12 @@
 const {parametrCrepps, timeLife} = require('./variables');
 const spawnModule = require('./spawnModule');
+
+let spawn = (Game.spawns['MomDelta'] && !Game.spawns['MomDelta'].spawning)
+    ? Game.spawns['MomDelta']
+    : Game.spawns['Mammy'];
+
 let roleManager = {
     tick: function() {
-        let spawn = Game.spawns['Mammy'];
 
         /*const minRoles = { оптимал
             builder: 1,
@@ -18,24 +22,23 @@ let roleManager = {
         const PATROL_POS = {x: 26, y: 24, roomName: 'W20N57'};
 
         const minRoles = {
-            mammyNanny: 100,
+            mammyNanny: 120,
             driller: 100,
             mover: 100,
 
 
+            builder: 0,
+            updater: 0,
+            remoteHauler: 1200,
 
-            mammyHealer: 600,
-            mammyTauer: 2500,
-            mammyRanged: 1900,
+            //Болок захвата
+            mammyHealer: 200, //1200 норм
+            mammyTauer: 2500, //2500 норм
+            mammyRanged: 600, //2200 норм
+            mammyRemoteHauler: 0, //2500 норм
+            mammyDefender: 0,
+            rat: 0,
 
-            mammyRemoteHauler: 2,
-
-            builder: 1,
-            updater: 1,
-
-            /*
-            mammyRemoteHauler: 0,
-            */
 
             /*
             mammyHealer: 1,
@@ -44,14 +47,16 @@ let roleManager = {
             remoteMiner: 0,
             remoteHauler: 1,
             patrol: 0,
+            attacker: 1,
             mammyDefender: 0,
             mammyTauer: 2,
             mammyRanged: 1,
-            mammyRemoteHauler: 2
+            mammyRemoteHauler: 2 //2500 норм
             */
         };
 
         const targetRoom = 'W22N56';
+        const targetRoomAttaker = 'W23N56';
         let hasEnemies = false;
         let enemyRoom = null;
         if (Game.rooms[targetRoom]) {
@@ -79,7 +84,8 @@ let roleManager = {
             mammyNanny: 0,
             mammyRemoteHauler: 0,
             mammyTauer: 0,
-            mammyRanged: 0
+            mammyRanged: 0,
+            rat: 0,
         };
 
         for (let c of allCreeps) {
@@ -88,76 +94,96 @@ let roleManager = {
             }
         }
         /*==============================================================================*/
-        if (roleSum.mammyNanny < minRoles.mammyNanny && !spawn.spawning) {
+
+        if (roleSum.mammyNanny < minRoles.mammyNanny  ){
             if (this.spawnMammyNanny() === OK) return;
         }
 
         let hasNanny = roleSum.mammyNanny >= minRoles.mammyNanny;
 
         if (hasNanny) {
-            if (roleSum.driller < minRoles.driller && !spawn.spawning) {
+            
+            if (roleSum.driller < minRoles.driller  ){
                 if (this.spawnDriller() === OK) return;
             }
 
             let hasDriller = roleSum.driller >= minRoles.driller;
 
             if (hasDriller) {
-                if (roleSum.mover < minRoles.mover && !spawn.spawning) {
+
+                if (roleSum.mover < minRoles.mover  ){
                     if (this.spawnMover() === OK) return;
                 }
                 let hasMover = roleSum.mover >= minRoles.mover;
 
                 if (hasMover) {
-                    if (roleSum.mammyHealer < minRoles.mammyHealer && !spawn.spawning) {
+                    if (roleSum.mammyHealer < minRoles.mammyHealer  ){
                         if (this.spawnMammyHealer() === OK) return;
                     }
+                    if (roleSum.updater < minRoles.updater ){
+                        if (this.spawnUpdater() === OK) return;
+                    }
+
+                    if (roleSum.builder < minRoles.builder ){
+                        if (this.spawnBuilder() === OK) return;
+                    }
+
                     let hasHealer = roleSum.mammyHealer >= minRoles.mammyHealer;
 
+
                     if (hasHealer) {
-                        if (roleSum.mammyTauer < minRoles.mammyTauer && !spawn.spawning) {
+                        if (roleSum.mammyTauer < minRoles.mammyTauer  ){
                             if (this.spawnMammyTauer() === OK) return;
                         }
                         let hasTauer = roleSum.mammyTauer >= minRoles.mammyTauer;
 
                         if (hasTauer) {
-                            if (roleSum.mammyRanged < minRoles.mammyRanged && !spawn.spawning) {
+                            if (roleSum.mammyRanged < minRoles.mammyRanged  ){
                                 if (this.spawnMammyRanged() === OK) return;
                             }
                             let hasRanged = roleSum.mammyRanged >= minRoles.mammyRanged;
 
                             if (hasRanged) {
-                                if (roleSum.remoteMiner < (minRoles.remoteMiner || 0) * 500 && !spawn.spawning) {
-                                    if (this.spawnRemoteMiner('W23N56') === OK) return;
-                                }
-                                if (roleSum.remoteHauler < (minRoles.remoteHauler || 0) * 1 && !spawn.spawning) {
-                                    if (this.spawnRemoteHauler('W23N56', {x: 29, y: 48, roomName: spawn.room.name}) === OK) return;
-                                }
 
-                                if (roleSum.mammyRemoteHauler < minRoles.mammyRemoteHauler * 600 && !spawn.spawning) {
+                                if (roleSum.mammyRemoteHauler < minRoles.mammyRemoteHauler ){
                                     if (this.spawnMammyRemoteHauler() === OK) return;
                                 }
 
-                                if (enemyRoom && roleSum.attacker === 0 && !spawn.spawning) {
-                                    if (spawnModule.spawnAttacker(enemyRoom) === OK) return;
-                                }
+                                let hasRemoteHauler = roleSum.mammyRemoteHauler >= minRoles.mammyRemoteHauler;
 
-                                if (roleSum.builder < (minRoles.builder || 0) * 1 && !spawn.spawning) {
-                                    if (this.spawnBuilder() === OK) return;
-                                }
-                                const fillerSourceRoom = 'W23N56';
-                                const fillerTargetRoom = 'W23N56';
-
-                                if (roleSum.filler < (minRoles.filler || 0) * 100 && !spawn.spawning) {
-                                    if (this.spawnFiller(fillerSourceRoom, fillerTargetRoom) === OK) return;
-                                }
-                                if (roleSum.updater < (minRoles.updater || 0) * 1 && !spawn.spawning) {
+                                if (roleSum.updater < minRoles.updater ){
                                     if (this.spawnUpdater() === OK) return;
                                 }
-                                if (roleSum.invader < (minRoles.invader || 0) * 10 && !spawn.spawning) {
-                                    if (this.spawnInvader() === OK) return;
+
+                                if (roleSum.builder < minRoles.builder ){
+                                    if (this.spawnBuilder() === OK) return;
                                 }
-                                if (roleSum.patrol < (minRoles.patrol || 0) * 600 && !spawn.spawning) {
-                                    if (this.spawnPatrol(PATROL_POS) === OK) return;
+
+                                if (hasRemoteHauler) {
+
+                                    if (roleSum.remoteMiner < (minRoles.remoteMiner || 0) * 500  ){
+                                        if (this.spawnRemoteMiner('W23N56') === OK) return;
+                                    }
+                                    if (roleSum.remoteHauler < (minRoles.remoteHauler || 0) * 1  ){
+                                        if (this.spawnRemoteHauler('W23N56', {x: 29, y: 48, roomName: spawn.room.name}) === OK) return;
+                                    }
+
+                                    if (enemyRoom && roleSum.attacker === 0  ){
+                                        if (spawnModule.spawnAttacker(enemyRoom) === OK) return;
+                                    }
+
+                                    const fillerSourceRoom = 'W23N56';
+                                    const fillerTargetRoom = 'W23N56';
+
+                                    if (roleSum.filler < (minRoles.filler || 0) * 100  ){
+                                        if (this.spawnFiller(fillerSourceRoom, fillerTargetRoom) === OK) return;
+                                    }
+                                    if (roleSum.invader < (minRoles.invader || 0) * 10  ){
+                                        if (this.spawnInvader() === OK) return;
+                                    }
+                                    if (roleSum.patrol < (minRoles.patrol || 0) * 600  ){
+                                        if (this.spawnPatrol(PATROL_POS) === OK) return;
+                                    }
                                 }
                             }
                         }
@@ -169,48 +195,48 @@ let roleManager = {
     },
 
     spawnBuilder: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
+        let body = [];
+
+        body.push(...Array(10).fill(WORK));
+        body.push(...Array(13).fill(MOVE));
+        body.push(...Array(10).fill(CARRY));
+
         let homeRoom = spawn.room.name;
         let name = 'Builder_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         let result = spawn.spawnCreep(parametrCrepps.base, name, { memory: { role: 'builder' } });
         if (result === ERR_NOT_ENOUGH_ENERGY) {
-            spawn.spawnCreep([
-                WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
-                MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
-                CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
-            ], name, { memory: { role: 'builder' } });
+            spawn.spawnCreep(body, name, { memory: { role: 'builder' } });
         }
     },
 
 
 
     spawnDriller: function() {
-        let spawn = Game.spawns['Mammy'];
-        let body = [
-            WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
-            MOVE,MOVE
-        ];
+        spawn = Game.spawns['Mammy']
+
+        let body = [];
+        body.push(...Array(15).fill(WORK));
+        body.push(...Array(1).fill(MOVE));
         let homeRoom = spawn.room.name;
         let name = 'Driller_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'driller' } });
     },
 
     spawnMover: function() {
-        let spawn = Game.spawns['Mammy'];
-        let body = [
-            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
-            MOVE,MOVE,MOVE,MOVE,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
-            CARRY,CARRY,CARRY,CARRY
-        ];
+        spawn = Game.spawns['Mammy']
+
+        let body = [];
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(35).fill(CARRY));
+
         let homeRoom = spawn.room.name;
         let name = 'Mover_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'mover' } });
     },
 
     spawnFiller: function(sourceRoom, targetRoom) {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
         let body = [
             MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
             CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,
@@ -220,19 +246,19 @@ let roleManager = {
     },
 
     spawnUpdater: function() {
-        let spawn = Game.spawns['Mammy'];
-        let body = [
-            WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
-            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
-        ];
+        spawn = Game.spawns['Mammy']
+        let body = [];
+        body.push(...Array(10).fill(WORK));
+        body.push(...Array(13).fill(MOVE));
+        body.push(...Array(10).fill(CARRY));
+
         let homeRoom = spawn.room.name;
         let name = 'Updater_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'updater' } });
     },
 
     spawnInvader: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
         let body = [
             WORK,WORK,WORK,WORK,WORK,WORK,
             MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
@@ -244,7 +270,7 @@ let roleManager = {
     },
 
     spawnRemoteMiner: function(targetRoom) {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
         let body = [
             WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,
             MOVE,MOVE,MOVE,MOVE,
@@ -254,12 +280,12 @@ let roleManager = {
     },
 
     spawnRemoteHauler: function(targetRoom, homeLinkPos) {
-        let spawn = Game.spawns['Mammy'];
-        let body = [
-            MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,
-            CARRY,CARRY,
-            CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY
-        ];
+        spawn = Game.spawns['Mammy']
+        let body = [];
+
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(30).fill(CARRY));
+
         let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, { memory: { role: 'remoteHauler', targetRoom, homeLinkPos } });
     },
@@ -269,25 +295,16 @@ let roleManager = {
     },
 
     spawnMammyDefender: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
         if (!spawn) return ERR_INVALID_TARGET;
-        
-        let body = [
-            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-            TOUGH, TOUGH, TOUGH,
 
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+        let body = [];
 
-            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-            ATTACK, ATTACK,
+        body.push(...Array(15).fill(TOUGH));
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(15).fill(ATTACK));
 
-                    ];
-        
-        let targetRoom = 'W24N56';
+        let targetRoom = 'W23N56';
         let name = 'Defender_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
             memory: {
@@ -299,15 +316,14 @@ let roleManager = {
     },
 
     spawnMammyHealer: function() {
-        let spawn = Game.spawns['Mammy'];
         if (!spawn) return ERR_INVALID_TARGET;
-        
-        let body = [
-            TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            MOVE, MOVE, MOVE, MOVE,
-            HEAL, HEAL, HEAL, HEAL, HEAL, HEAL
-        ];
-        
+        spawn = Game.spawns['MomDelta']
+        let body = [];
+
+        body.push(...Array(2).fill(TOUGH));
+        body.push(...Array(14).fill(MOVE));
+        body.push(...Array(14).fill(HEAL));
+
         let targetRoom = 'W24N56';
         let name = 'Healer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
@@ -320,13 +336,13 @@ let roleManager = {
     },
 
     spawnMammyRemoteHauler: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['Mammy']
         if (!spawn) return ERR_INVALID_TARGET;
         let body = [];
 
         body.push(...Array(15).fill(MOVE));
         body.push(...Array(30).fill(CARRY));
-        
+
         let targetRoom = 'W24N56';
         let homeRoom = spawn.room.name;
         let name = 'RemoteHauler_' + spawn.name + '_' + targetRoom + '_' + Game.time;
@@ -334,24 +350,21 @@ let roleManager = {
             memory: {
                 role: 'mammyRemoteHauler',
                 targetRoom: targetRoom,
-                homeRoom: homeRoom
+                homeRoom: homeRoom,
+                decoration: 'C-00109:NA:A'
             }
         });
     },
 
     spawnMammyTauer: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['MomDelta']
         if (!spawn) return ERR_INVALID_TARGET;
-        
-        let body = [
-            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-            TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            MOVE, MOVE,
-            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-            ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK
-        ];
-        
+        let body = [];
+
+        body.push(...Array(15).fill(TOUGH));
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(15).fill(ATTACK));
+
         let targetRoom = 'W24N56';
         let name = 'Tauer_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
@@ -363,14 +376,14 @@ let roleManager = {
     },
 
     spawnMammyRanged: function() {
-        let spawn = Game.spawns['Mammy'];
+        spawn = Game.spawns['MomDelta']
         if (!spawn) return ERR_INVALID_TARGET;
 
         let body = [];
-        body.push(...Array(2).fill(TOUGH));
-        body.push(...Array(12).fill(MOVE));
-        body.push(...Array(10).fill(RANGED_ATTACK));
-        
+        body.push(...Array(5).fill(TOUGH));
+        body.push(...Array(25).fill(MOVE));
+        body.push(...Array(20).fill(RANGED_ATTACK));
+
         let targetRoom = 'W24N56';
         let name = 'Ranged_' + spawn.name + '_' + targetRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {
@@ -381,16 +394,33 @@ let roleManager = {
         });
     },
 
-    spawnMammyNanny: function() {
-        let spawn = Game.spawns['Mammy'];
+    spawnRat: function() {
+        spawn = Game.spawns['Mammy']
         if (!spawn) return ERR_INVALID_TARGET;
-        
-        let body = [
-            MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-            CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        ];
-        
+
+        let body = [];
+        body.push(...Array(20).fill(TOUGH));
+        body.push(...Array(25).fill(MOVE));
+        body.push(...Array(4).fill(RANGED_ATTACK));
+
+        let targetRoom = 'W23N56';
+        let name = 'Rat_' + spawn.name + '_' + 'W23N56' + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'rat',
+                targetRoom: targetRoom
+            }
+        });
+    },
+
+    spawnMammyNanny: function() {
+        spawn = Game.spawns['Mammy']
+        if (!spawn) return ERR_INVALID_TARGET;
+
+        let body = [];
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(35).fill(CARRY));
+
         let homeRoom = spawn.room.name;
         let name = 'Nanny_' + spawn.name + '_' + homeRoom + '_' + Game.time;
         return spawn.spawnCreep(body, name, {

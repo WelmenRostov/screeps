@@ -41,6 +41,12 @@ const roleMammyRanged = require('./roleMammyRanged');
 const roleSteveUpdater = require('./roleSteveUpdater');
 const roleSteveMiner = require('./roleSteveMiner');
 const roleSteveMover = require('./roleSteveMover');
+const roleSteveInvader = require('./roleSteveInvader');
+const roleSteveRemoteMiner = require('./roleSteveRemoteMiner');
+const roleRemoteMinerTwo = require('./roleRemoteMinerTwo');
+const roleSteveRemoteHauler = require('./roleSteveRemoteHauler');
+const roleSteveReserver = require('./roleSteveReserver');
+const roleSteveReserverTwo = require('./roleSteveReserverTwo');
 const roleManager = require('./roleManager');
 const spawnBobManager = require('./spawnBobManager');
 const spawnSteveManager = require('./spawnSteveManager');
@@ -99,6 +105,24 @@ global.changePatrolRoom = function(roomName, x, y) {
         patrol.memory.patrolPos = {x: x, y: y, roomName: roomName};
         console.log(`✅ Точка патруля для ${patrol.name} изменена на (${x}, ${y}) в комнате ${roomName}`);
     }
+};
+global.sendCreepToRoom = function(creepName, targetRoom) {
+    let creep = Game.creeps[creepName];
+    if (!creep) {
+        console.log(`❌ Крип ${creepName} не найден`);
+        return;
+    }
+    creep.memory.shutdownZoneTargetRoom = targetRoom;
+    console.log(`✅ Крип ${creepName} отправлен в комнату ${targetRoom}. Зона перестанет влиять на него когда он дойдет.`);
+};
+global.setCreepBadge = function(creepName, badge) {
+    let creep = Game.creeps[creepName];
+    if (!creep) {
+        console.log(`❌ Крип ${creepName} не найден`);
+        return;
+    }
+    creep.badge = badge;
+    console.log(`✅ Декорация "${badge}" установлена на крипа ${creepName}`);
 };
 // === Очистка памяти умерших крипов ===
 for (let name in Memory.creeps) {
@@ -162,13 +186,32 @@ const roleHandlers = {
     steveUpdater: roleSteveUpdater,
     steveMiner: roleSteveMiner,
     steveMover: roleSteveMover,
-    steveRepairer: roleSteveRepairer
+    steveRepairer: roleSteveRepairer,
+    steveInvader: roleSteveInvader,
+    steveInvaderTwo: roleSteveInvader,
+    steveInvaderThree: roleSteveInvader,
+    steveRemoteMiner: roleSteveRemoteMiner,
+    steveRemoteHauler: roleSteveRemoteHauler,
+    steveRemoteMinerTwo: roleRemoteMinerTwo,
+    steveRemoteHaulerTwo: roleSteveRemoteHauler,
+    steveReserver: roleSteveReserver,
+    steveReserverTwo: roleSteveReserverTwo,
 };
 
 shutdownZone.update();
 
 for (let name in Game.creeps) {
     let creep = Game.creeps[name];
+    
+    if (creep.memory.role === 'mammyRemoteHauler' || creep.memory.role === 'bobRemoteHauler' || creep.memory.role === 'bobRemoteHaulerW24N56') {
+        if (!creep.badge || creep.badge !== 'C-00109:NA:A') {
+            creep.badge = 'C-00109:NA:A';
+        }
+    } else {
+        if (creep.badge === 'C-00109:NA:A') {
+            creep.badge = '';
+        }
+    }
     
     if (shutdownZone.handleCreep(creep)) {
         continue;
@@ -275,4 +318,39 @@ for (let roomName in Game.rooms) {
     room.visual.text(`+${stat.put}`, storage.pos.x - 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#00ff00'});
     room.visual.text(`-${stat.taken}`, storage.pos.x + 1.2, storage.pos.y + 0.1, {align: 'center', font: 0.3, color: '#ff00' +
             '00'});
+
+    function checkCPUUsage() {
+        let totalCPU = 0;  // Переменная для хранения общей суммы CPU
+
+        // Проходим по всем крипам
+        for (let creepName in Game.creeps) {
+            let creep = Game.creeps[creepName];
+
+            // Сохраняем стартовое время
+            const startCPU = Game.cpu.getUsed();
+
+            // Пример действия: передвижение к ближайшему флагу
+            const target = creep.pos.findClosestByRange(FIND_FLAGS);
+            if (target) {
+                creep.moveTo(target);
+            }
+
+            // Рассчитываем использование CPU после действия
+            const cpuUsed = Game.cpu.getUsed() - startCPU;
+
+            // Если крип использует больше 0.0001 CPU, выводим его имя и использование CPU
+            if (cpuUsed > 0.0001) {
+                console.log(`${creep.name}: ${cpuUsed.toFixed(5)} CPU`);
+                totalCPU += cpuUsed;  // Добавляем использованное CPU к общей сумме
+            }
+        }
+
+        // Выводим общую сумму использованного CPU всеми крипами
+        console.log(`Общее использование CPU всеми крипами: ${totalCPU.toFixed(5)} CPU`);
+
+        // Выводим общее использование CPU на сервере за тик (для всех процессов)
+        console.log(`Общее использование CPU за тик: ${Game.cpu.getUsed().toFixed(5)} CPU`);
+    }
+
+    checkCPUUsage();
 }

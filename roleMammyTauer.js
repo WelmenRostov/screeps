@@ -2,7 +2,7 @@ const creepMovement = require('./creepMovement');
 
 let roleMammyTauer = {
     WATCH_POSITIONS: [
-        { x: 36, y: 16 },
+        { x: 36, y: 15 },
         { x: 16, y: 46 },
         { x: 6, y: 16 }
     ],
@@ -86,7 +86,7 @@ let roleMammyTauer = {
         const targetRoom = 'W24N56';
 
         if (creep.room.name !== targetRoom) {
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+            creepMovement.moveTo(creep, new RoomPosition(18, 15, targetRoom), {
                 reusePath: 20
             });
             return;
@@ -112,7 +112,7 @@ let roleMammyTauer = {
         let watchPos = this.findMyPosition(creep, targetRoom);
 
         if (!watchPos) {
-            let centerPos = new RoomPosition(25, 25, targetRoom);
+            let centerPos = new RoomPosition(22, 25, targetRoom);
             creepMovement.moveTo(creep, centerPos, {
                 reusePath: 10
             });
@@ -132,48 +132,66 @@ let roleMammyTauer = {
             return;
         }
 
-        let squadLeader = null;
-        if (Memory.mammyRangedSquad && Memory.mammyRangedSquad[targetRoom]) {
-            let leaderId = Memory.mammyRangedSquad[targetRoom].leaderId;
-            if (leaderId) {
-                squadLeader = Game.getObjectById(leaderId);
-            }
-        }
-        
-        let shouldHelpSquad = false;
-        if (squadLeader && squadLeader.room && squadLeader.room.name === targetRoom && squadLeader.memory.assignedTargetId) {
-            let leaderTarget = Game.getObjectById(squadLeader.memory.assignedTargetId);
-            if (leaderTarget && leaderTarget.room && leaderTarget.room.name === targetRoom) {
-                shouldHelpSquad = true;
-            }
-        }
-
         let hostileCreeps = creep.room.find(FIND_HOSTILE_CREEPS);
-        let keeperHostiles = hostileCreeps.filter(h => {
-            let dx = h.pos.x - closestKeeper.x;
-            let dy = h.pos.y - closestKeeper.y;
-            return Math.abs(dx) + Math.abs(dy) <= 5;
-        });
-
-        if (shouldHelpSquad && squadLeader && squadLeader.memory.assignedTargetId) {
-            let squadTarget = Game.getObjectById(squadLeader.memory.assignedTargetId);
-            if (squadTarget && squadTarget.room && squadTarget.room.name === targetRoom) {
-                let range = creep.pos.getRangeTo(squadTarget);
+        let invaderCreeps = hostileCreeps.filter(h => 
+            h.name && (h.name.startsWith('invader') || h.name.toLowerCase().startsWith('invader'))
+        );
+        
+        if (invaderCreeps.length > 0) {
+            let squadLeader = null;
+            if (Memory.mammyRangedSquad && Memory.mammyRangedSquad[targetRoom]) {
+                let leaderId = Memory.mammyRangedSquad[targetRoom].leaderId;
+                if (leaderId) {
+                    squadLeader = Game.getObjectById(leaderId);
+                }
+            }
+            
+            if (squadLeader && squadLeader.room && squadLeader.room.name === targetRoom && squadLeader.memory.assignedTargetId) {
+                let squadTarget = Game.getObjectById(squadLeader.memory.assignedTargetId);
+                if (squadTarget && squadTarget.room && squadTarget.room.name === targetRoom) {
+                    let range = creep.pos.getRangeTo(squadTarget);
+                    
+                    if (range <= 1 && creep.getActiveBodyparts(ATTACK) > 0) {
+                        creep.attack(squadTarget);
+                    } else if (range <= 3 && creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
+                        creep.rangedAttack(squadTarget);
+                    }
+                    
+                    if (range > 1) {
+                        if (creep.getActiveBodyparts(ATTACK) > 0) {
+                            creepMovement.moveTo(creep, squadTarget, {
+                                range: 1,
+                                reusePath: 5
+                            });
+                        } else if (creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
+                            creepMovement.moveTo(creep, squadTarget, {
+                                range: 3,
+                                reusePath: 5
+                            });
+                        }
+                    }
+                    return;
+                }
+            }
+            
+            let target = creep.pos.findClosestByRange(invaderCreeps);
+            if (target) {
+                let range = creep.pos.getRangeTo(target);
                 
                 if (range <= 1 && creep.getActiveBodyparts(ATTACK) > 0) {
-                    creep.attack(squadTarget);
+                    creep.attack(target);
                 } else if (range <= 3 && creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
-                    creep.rangedAttack(squadTarget);
+                    creep.rangedAttack(target);
                 }
                 
                 if (range > 1) {
                     if (creep.getActiveBodyparts(ATTACK) > 0) {
-                        creepMovement.moveTo(creep, squadTarget, {
+                        creepMovement.moveTo(creep, target, {
                             range: 1,
                             reusePath: 5
                         });
                     } else if (creep.getActiveBodyparts(RANGED_ATTACK) > 0) {
-                        creepMovement.moveTo(creep, squadTarget, {
+                        creepMovement.moveTo(creep, target, {
                             range: 3,
                             reusePath: 5
                         });
@@ -182,6 +200,12 @@ let roleMammyTauer = {
                 return;
             }
         }
+        
+        let keeperHostiles = hostileCreeps.filter(h => {
+            let dx = h.pos.x - closestKeeper.x;
+            let dy = h.pos.y - closestKeeper.y;
+            return Math.abs(dx) + Math.abs(dy) <= 5;
+        });
 
         if (keeperHostiles.length > 0) {
             let target = creep.pos.findClosestByRange(keeperHostiles);

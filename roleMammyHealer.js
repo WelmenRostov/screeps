@@ -4,6 +4,7 @@ let roleMammyHealer = {
     run: function(creep) {
         const targetRoom = creep.memory.targetRoom || 'W24N56';
 
+        // --- Двигаемся в целевую комнату ---
         if (creep.room.name !== targetRoom) {
             creepMovement.moveTo(creep, new RoomPosition(27, 30, targetRoom), {
                 reusePath: 20
@@ -11,13 +12,21 @@ let roleMammyHealer = {
             return;
         }
 
+        // --- В первую очередь лечим себя ---
+        if (creep.hits < creep.hitsMax) {
+            creep.heal(creep);
+            return; // пока не восстановим себя — не лечим других
+        }
+
+        // --- Ищем повреждённых союзных крипов ---
         let damagedCreeps = creep.room.find(FIND_MY_CREEPS, {
             filter: c => c.hits < c.hitsMax && c !== creep
         });
 
         if (damagedCreeps.length === 0) {
+            // Нет целей — стоим в центре
             let centerPos = new RoomPosition(27, 30, targetRoom);
-            if (creep.pos.getRangeTo(centerPos) > 0) {
+            if (!creep.pos.isEqualTo(centerPos)) {
                 creepMovement.moveTo(creep, centerPos, {
                     reusePath: 10,
                     range: 0
@@ -26,21 +35,18 @@ let roleMammyHealer = {
             return;
         }
 
+        // --- Лечим ближайшего союзного крипа ---
         let target = creep.pos.findClosestByRange(damagedCreeps);
 
         if (target) {
             let range = creep.pos.getRangeTo(target);
-            
+
             if (range <= 1) {
-                if (target.hits < target.hitsMax) {
-                    creep.heal(target);
-                }
+                creep.heal(target);
             } else if (range <= 3) {
-                if (target.hits < target.hitsMax) {
-                    creep.rangedHeal(target);
-                }
+                creep.rangedHeal(target);
             }
-            
+
             if (range > 1) {
                 creepMovement.moveTo(creep, target, {
                     range: 1,
@@ -52,4 +58,3 @@ let roleMammyHealer = {
 };
 
 module.exports = roleMammyHealer;
-

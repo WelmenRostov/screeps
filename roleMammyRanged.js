@@ -65,7 +65,7 @@ let roleMammyRanged = {
                 };
             }
             squad.cache.invaderCreeps = room.find(FIND_HOSTILE_CREEPS, {
-                filter: h => h.name && (h.name.startsWith('invader') || h.name.toLowerCase().startsWith('invader'))
+                filter: h => h.name && (h.name.startsWith('invader') || h.name.startsWith('Keeper'))
             });
             squad.cache.cacheTick = Game.time;
         }
@@ -75,7 +75,7 @@ let roleMammyRanged = {
     getKeeperCreeps: function(room) {
         if (!room) return [];
         let hostiles = room.find(FIND_HOSTILE_CREEPS);
-        return hostiles.filter(h => h.name && h.name.toLowerCase().startsWith('invader'));
+        return hostiles.filter(h => h.name && h.name.startsWith('Keeper'));
     },
 
     hasEnemyHealer: function(room) {
@@ -407,7 +407,7 @@ let roleMammyRanged = {
         }
 
         if (isLeader) {
-            if (!target || !target.pos || !target.room) {
+            if (!target || !target.pos || !target.room || target.hits <= 0) {
                 if (creep.memory.assignedTargetId) {
                     creep.memory.assignedTargetId = null;
                 }
@@ -423,20 +423,18 @@ let roleMammyRanged = {
 
             let squadReady = this.isSquadReady(creep, allRanged);
 
-            if (!squadReady) {
-                return;
-            }
-
             if (range < 2) {
                 creepMovement.moveTo(creep, target, {
                     range: 2,
                     reusePath: 5
                 });
             } else if (range > 3) {
-                creepMovement.moveTo(creep, target, {
-                    range: 3,
-                    reusePath: 5
-                });
+                if (squadReady) {
+                    creepMovement.moveTo(creep, target, {
+                        range: 3,
+                        reusePath: 5
+                    });
+                }
             }
         } else {
             if (range < 2) {
@@ -455,7 +453,7 @@ let roleMammyRanged = {
 
     run: function(creep) {
         const targetRoom = creep.memory.targetRoom || 'W24N56';
-        const centerPos = new RoomPosition(25, 25, targetRoom);
+        const centerPos = new RoomPosition(21, 29, targetRoom);
 
         if (creep.room.name !== targetRoom) {
             creepMovement.moveTo(creep, centerPos, {
@@ -479,7 +477,7 @@ let roleMammyRanged = {
         if (rangedCreeps.length <= 1) {
             let keeperCreeps = this.getKeeperCreeps(creep.room);
             let invaderCreeps = creep.room.find(FIND_HOSTILE_CREEPS, {
-                filter: h => h.name && (h.name.startsWith('invader') || h.name.toLowerCase().startsWith('invader'))
+                filter: h => h.name && (h.name.startsWith('invader') || h.name.startsWith('Keeper'))
             });
 
             if (keeperCreeps.length > 0) {
@@ -564,23 +562,31 @@ let roleMammyRanged = {
             if (isLeader) {
                 if (creep.memory.assignedTargetId) {
                     let assignedTarget = Game.getObjectById(creep.memory.assignedTargetId);
-                    if (assignedTarget && assignedTarget.pos && assignedTarget.room && assignedTarget.room.name === creep.room.name) {
+                    if (assignedTarget && assignedTarget.pos && assignedTarget.room && assignedTarget.room.name === creep.room.name && assignedTarget.hits > 0) {
                         let targetInList = allTargets.find(h => h.id === assignedTarget.id);
                         if (targetInList) {
                             target = assignedTarget;
+                        } else {
+                            creep.memory.assignedTargetId = null;
                         }
+                    } else {
+                        creep.memory.assignedTargetId = null;
                     }
                 }
                 
                 if (!target) {
                     if (keeperCreeps.length > 0) {
                         target = creep.pos.findClosestByRange(keeperCreeps);
-                    } else {
+                    } else if (invaderCreeps.length > 0) {
                         target = creep.pos.findClosestByRange(invaderCreeps);
                     }
                 }
                 
-                if (target) {
+                if (target && target.hits > 0) {
+                    let currentRange = creep.pos.getRangeTo(target);
+                    if (currentRange <= 3) {
+                        creep.rangedAttack(target);
+                    }
                     creep.memory.assignedTargetId = target.id;
                     this.attackTarget(creep, target, true, rangedCreeps);
                 } else {

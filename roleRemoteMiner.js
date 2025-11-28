@@ -10,15 +10,15 @@ let roleRemoteMiner = {
 
         // Если не в целевой комнате — идём туда
         if (creep.room.name !== targetRoom) {
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), { 
-                reusePath: 15, 
-                visualizePathStyle: { stroke: '#ffaa00' } 
+            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+                reusePath: 15,
+                visualizePathStyle: { stroke: '#ffaa00' }
             });
             return;
         }
 
-        // Фиксированные позиции для майнеров
-        const fixedPositions = [
+        // Получаем позиции из памяти
+        const fixedPositions = creep.memory.miningPositions || [
             new RoomPosition(41, 9, targetRoom),
             new RoomPosition(28, 43, targetRoom)
         ];
@@ -31,12 +31,13 @@ let roleRemoteMiner = {
             }
         }
 
-        // Проверяем обе позиции
+        // Проверяем все позиции
         let targetPos = null;
         let targetSource = null;
         let positionsInfo = [];
         let myCurrentPos = null;
 
+        // Ищем ближайшую свободную позицию или проверяем, если на текущей позиции есть источник
         for (let pos of fixedPositions) {
             // Находим источник рядом с позицией (в радиусе 1)
             let nearbySource = pos.findInRange(FIND_SOURCES, 1)[0];
@@ -72,13 +73,12 @@ let roleRemoteMiner = {
             }
         }
 
-        // Проверяем, находимся ли мы уже на одной из фиксированных позиций
+        // Если мы уже на своей позиции, продолжаем работать
         if (myCurrentPos) {
             let myPosInfo = positionsInfo.find(p => p.isMyPos);
             let creepsOnMyPos = myCurrentPos.lookFor(LOOK_CREEPS);
             let otherMinerOnMyPos = creepsOnMyPos.find(c => c !== creep && c.memory.role === 'remoteMiner');
-            
-            // Если мы на своей позиции и там нет других крипов - остаёмся
+
             if (!otherMinerOnMyPos && myPosInfo) {
                 targetPos = myCurrentPos;
                 targetSource = myPosInfo.source;
@@ -104,36 +104,32 @@ let roleRemoteMiner = {
             }
         }
 
-        // Если мы уже на целевой позиции
+        // Если мы на целевой позиции
         if (targetPos && creep.pos.x === targetPos.x && creep.pos.y === targetPos.y) {
-            // Проверяем, есть ли другой крип на позиции
             let creepsOnPos = targetPos.lookFor(LOOK_CREEPS);
             let otherMiner = creepsOnPos.find(c => c !== creep && c.memory.role === 'remoteMiner');
-            
-            // Если на позиции есть другой крип - уходим
+
             if (otherMiner) {
+                // На позиции есть другой крип, ищем свободную
                 let freePos = positionsInfo.find(p => !p.occupied && !p.isMyPos);
                 if (freePos) {
                     targetPos = freePos.pos;
                     targetSource = freePos.source;
                 } else {
-                    // Нет свободных позиций - остаёмся и ждём (крип с меньшим ticksToLive умрёт первым)
-                    return;
+                    return;  // Если нет свободных позиций, остаёмся на месте
                 }
             } else if (targetSource) {
-                // Мы одни на позиции - добываем источник, если в нём есть энергия
                 if (targetSource.energy > 0) {
                     const res = creep.harvest(targetSource);
                     if (res === ERR_NOT_IN_RANGE) {
-                        creepMovement.moveTo(creep, targetSource, { 
-                            reusePath: 5, 
-                            visualizePathStyle: { stroke: '#ffaa00' } 
+                        creepMovement.moveTo(creep, targetSource, {
+                            reusePath: 5,
+                            visualizePathStyle: { stroke: '#ffaa00' }
                         });
                     }
                 }
-                // Если источник пуст - остаёмся на позиции и ждём
-                
-                // Сбрасываем энергию
+
+                // Если источник пуст, оставляем крип на позиции и ждём
                 if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                     const container = targetPos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_CONTAINER);
                     if (container) {
@@ -148,14 +144,12 @@ let roleRemoteMiner = {
 
         // Двигаемся к целевой позиции
         if (targetPos && targetSource) {
-            creepMovement.moveTo(creep, targetPos, { 
-                reusePath: 10, 
-                visualizePathStyle: { stroke: '#ffaa00' } 
+            creepMovement.moveTo(creep, targetPos, {
+                reusePath: 10,
+                visualizePathStyle: { stroke: '#ffaa00' }
             });
         }
     }
 };
 
 module.exports = roleRemoteMiner;
-
-

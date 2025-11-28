@@ -1,13 +1,11 @@
 const creepMovement = require('./creepMovement');
 
-let roleBobRemoteMinerW24N56 = {
+let roleSteveRemoteMiner = {
     MINING_POSITIONS: [
-        { x: 38, y: 12 },
-        { x: 15, y: 45 },
-        { x: 4, y: 15 }
+        { x: 38, y: 35 },
     ],
-    WAIT_POSITION: { x: 30, y: 33 },
-    
+    WAIT_POSITION: { x: 37, y: 36 },
+
     initMemory: function() {
         if (!Memory.bobRemoteMinerW24N56) {
             Memory.bobRemoteMinerW24N56 = {
@@ -15,7 +13,7 @@ let roleBobRemoteMinerW24N56 = {
                 lastCleanup: Game.time
             };
         }
-        
+
         for (let pos of this.MINING_POSITIONS) {
             let posKey = `${pos.x},${pos.y}`;
             if (!Memory.bobRemoteMinerW24N56.positions[posKey]) {
@@ -25,7 +23,7 @@ let roleBobRemoteMinerW24N56 = {
                 };
             }
         }
-        
+
         if (Game.time - Memory.bobRemoteMinerW24N56.lastCleanup > 10) {
             for (let posKey in Memory.bobRemoteMinerW24N56.positions) {
                 let posData = Memory.bobRemoteMinerW24N56.positions[posKey];
@@ -37,40 +35,40 @@ let roleBobRemoteMinerW24N56 = {
             Memory.bobRemoteMinerW24N56.lastCleanup = Game.time;
         }
     },
-    
+
     findFreePosition: function(creep, targetRoom) {
         for (let pos of this.MINING_POSITIONS) {
             let posKey = `${pos.x},${pos.y}`;
             let posData = Memory.bobRemoteMinerW24N56.positions[posKey];
-            
+
             if (!posData || !posData.occupied) {
                 if (posData && posData.creepId && Game.creeps[posData.creepId]) {
                     continue;
                 }
-                
+
                 let roomPos = new RoomPosition(pos.x, pos.y, targetRoom);
                 let creepsAtPos = roomPos.lookFor(LOOK_CREEPS);
-                let hasOtherMiner = creepsAtPos.some(c => 
-                    c.id !== creep.id && 
-                    c.memory && 
-                    c.memory.role === 'bobRemoteMinerW24N56'
+                let hasOtherMiner = creepsAtPos.some(c =>
+                    c.id !== creep.id &&
+                    c.memory &&
+                    c.memory.role === 'steveRemoteMiner'
                 );
-                
+
                 if (!hasOtherMiner) {
                     return pos;
                 }
             }
         }
-        
+
         return null;
     },
-    
+
     occupyPosition: function(creep, pos, targetRoom) {
         if (!pos) return false;
-        
+
         let posKey = `${pos.x},${pos.y}`;
         let posData = Memory.bobRemoteMinerW24N56.positions[posKey];
-        
+
         if (posData && posData.occupied && posData.creepId !== creep.id) {
             if (Game.creeps[posData.creepId]) {
                 return false;
@@ -78,7 +76,7 @@ let roleBobRemoteMinerW24N56 = {
             posData.occupied = false;
             posData.creepId = null;
         }
-        
+
         Memory.bobRemoteMinerW24N56.positions[posKey] = {
             occupied: true,
             creepId: creep.id
@@ -86,28 +84,28 @@ let roleBobRemoteMinerW24N56 = {
         creep.memory.miningPos = pos;
         return true;
     },
-    
+
     releasePosition: function(creep) {
         if (!creep.memory.miningPos) return;
-        
+
         let pos = creep.memory.miningPos;
         let posKey = `${pos.x},${pos.y}`;
-        
+
         if (Memory.bobRemoteMinerW24N56.positions[posKey]) {
             Memory.bobRemoteMinerW24N56.positions[posKey].occupied = false;
             Memory.bobRemoteMinerW24N56.positions[posKey].creepId = null;
         }
-        
+
         creep.memory.miningPos = null;
     },
-    
+
     run: function(creep) {
         this.initMemory();
 
-        const targetRoom = creep.memory.targetRoom || 'W24N56';
+        const targetRoom = creep.memory.targetRoom || 'W22N55';
 
         if (creep.room.name !== targetRoom) {
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+            creepMovement.moveTo(creep, new RoomPosition(37, 36, targetRoom), {
                 reusePath: 10
             });
             return;
@@ -115,30 +113,30 @@ let roleBobRemoteMinerW24N56 = {
 
         let miningPos = creep.memory.miningPos;
         let isOnMiningPos = miningPos && creep.pos.x === miningPos.x && creep.pos.y === miningPos.y;
-        
+
         if (miningPos) {
             let posKey = `${miningPos.x},${miningPos.y}`;
             let posData = Memory.bobRemoteMinerW24N56.positions[posKey];
-            
+
             if (!posData || posData.creepId !== creep.id) {
                 this.releasePosition(creep);
                 miningPos = null;
             } else {
                 let roomPos = new RoomPosition(miningPos.x, miningPos.y, targetRoom);
                 let creepsAtPos = roomPos.lookFor(LOOK_CREEPS);
-                let hasOtherMiner = creepsAtPos.some(c => 
-                    c.id !== creep.id && 
-                    c.memory && 
-                    c.memory.role === 'bobRemoteMinerW24N56'
+                let hasOtherMiner = creepsAtPos.some(c =>
+                    c.id !== creep.id &&
+                    c.memory &&
+                    c.memory.role === 'steveRemoteMiner'
                 );
-                
+
                 if (hasOtherMiner) {
                     this.releasePosition(creep);
                     miningPos = null;
                 }
             }
         }
-        
+
         if (!miningPos) {
             let freePos = this.findFreePosition(creep, targetRoom);
             if (freePos && this.occupyPosition(creep, freePos, targetRoom)) {
@@ -177,7 +175,7 @@ let roleBobRemoteMinerW24N56 = {
                     reusePath: 5
                 });
             }
-            
+
             if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                 creep.drop(RESOURCE_ENERGY);
             }
@@ -185,4 +183,4 @@ let roleBobRemoteMinerW24N56 = {
     }
 };
 
-module.exports = roleBobRemoteMinerW24N56;
+module.exports = roleSteveRemoteMiner;

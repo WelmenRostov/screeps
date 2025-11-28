@@ -1,11 +1,10 @@
 const creepMovement = require('./creepMovement');
 
-let roleBobInvader = {
-    /** @param {Creep} creep **/
+let roleSteveInvader = {
     run: function(creep) {
         new RoomVisual(creep.room.name).text('🏗️', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
-        const targetRoom = creep.memory.targetRoom || 'W21N56';
+        const targetRoom = creep.memory.targetRoom || 'W19N55';
         const homeRoom = creep.memory.homeRoom || creep.room.name;
 
         if (creep.store[RESOURCE_ENERGY] === 0) {
@@ -19,7 +18,7 @@ let roleBobInvader = {
 
         if (creep.memory.working) {
             if (creep.room.name !== targetRoom) {
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+                creepMovement.moveTo(creep, new RoomPosition(24, 27, targetRoom), {
                     reusePath: 10,
                     visualizePathStyle: { stroke: '#ff0000' }
                 });
@@ -42,7 +41,7 @@ let roleBobInvader = {
             }
 
             let damagedRoad = creep.room.find(FIND_STRUCTURES, {
-                filter: (s) => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax * 0.5
+                filter: s => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax * 0.5
             });
             if (damagedRoad.length > 0) {
                 let closest = creep.pos.findClosestByPath(damagedRoad);
@@ -59,7 +58,7 @@ let roleBobInvader = {
             }
 
             let damagedStructure = creep.room.find(FIND_MY_STRUCTURES, {
-                filter: (s) => s.hits < s.hitsMax &&
+                filter: s => s.hits < s.hitsMax &&
                     s.structureType !== STRUCTURE_WALL &&
                     s.structureType !== STRUCTURE_RAMPART &&
                     s.structureType !== STRUCTURE_ROAD
@@ -89,7 +88,7 @@ let roleBobInvader = {
             }
 
             let weakWall = creep.room.find(FIND_MY_STRUCTURES, {
-                filter: (s) => (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART) && s.hits < s.hitsMax
+                filter: s => (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART) && s.hits < s.hitsMax
             });
             if (weakWall.length > 0) {
                 let closest = creep.pos.findClosestByPath(weakWall);
@@ -105,7 +104,7 @@ let roleBobInvader = {
             }
 
             let fallbackRepair = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                filter: (s) => s.hits < s.hitsMax
+                filter: s => s.hits < s.hitsMax
             });
 
             if (fallbackRepair) {
@@ -125,7 +124,7 @@ let roleBobInvader = {
         } else {
             if (creep.room.name === targetRoom) {
                 let drop = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
-                    filter: (r) => r.resourceType === RESOURCE_ENERGY && r.amount > 0
+                    filter: r => r.resourceType === RESOURCE_ENERGY && r.amount > 0
                 });
 
                 if (drop) {
@@ -141,7 +140,7 @@ let roleBobInvader = {
 
             if (creep.room.name === homeRoom) {
                 let storage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (s) => s.structureType === STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] > 0
+                    filter: s => s.structureType === STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] > 0
                 });
 
                 if (storage) {
@@ -155,7 +154,7 @@ let roleBobInvader = {
                 }
 
                 let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+                    filter: s => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
                 });
 
                 if (container) {
@@ -190,5 +189,6 @@ let roleBobInvader = {
     }
 };
 
-module.exports = roleBobInvader;
+module.exports = roleSteveInvader;
+
 
