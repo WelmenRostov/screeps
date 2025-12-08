@@ -32,6 +32,7 @@ let roleBobMover = {
             return reserveContainerPositions.some(rp => rp.x === pos.x && rp.y === pos.y);
         };
 
+
         if (creep.memory.working) {
             let hasNonEnergy = false;
             for (let resource in creep.store) {

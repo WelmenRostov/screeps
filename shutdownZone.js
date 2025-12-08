@@ -108,7 +108,7 @@ let shutdownZone = {
         if (!targetRoom) return false;
         
         let invaders = targetRoom.find(FIND_HOSTILE_CREEPS, {
-            filter: h => h.name && (h.name.startsWith('invader') || h.name.toLowerCase().startsWith('invader'))
+            filter: h => h.name && (h.name.startsWith('111') || h.name.toLowerCase().startsWith('111'))
         });
         
         return invaders.length > 0;
@@ -121,7 +121,7 @@ let shutdownZone = {
         if (!targetRoom) return true;
         
         let invaders = targetRoom.find(FIND_HOSTILE_CREEPS, {
-            filter: h => h.name && (h.name.startsWith('invader') || h.name.toLowerCase().startsWith('invader'))
+            filter: h => h.name && (h.name.startsWith('111') || h.name.toLowerCase().startsWith('111'))
         });
         
         return invaders.length === 0;

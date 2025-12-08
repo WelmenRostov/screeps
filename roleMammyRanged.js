@@ -65,7 +65,7 @@ let roleMammyRanged = {
                 };
             }
             squad.cache.invaderCreeps = room.find(FIND_HOSTILE_CREEPS, {
-                filter: h => h.name && (h.name.startsWith('invader') || h.name.startsWith('Keeper'))
+                filter: h => h.name && (h.name.startsWith('Keeper') || h.name.startsWith('invader'))
             });
             squad.cache.cacheTick = Game.time;
         }
@@ -453,7 +453,7 @@ let roleMammyRanged = {
 
     run: function(creep) {
         const targetRoom = creep.memory.targetRoom || 'W24N56';
-        const centerPos = new RoomPosition(21, 29, targetRoom);
+        const centerPos = new RoomPosition(28, 29, targetRoom);
 
         if (creep.room.name !== targetRoom) {
             creepMovement.moveTo(creep, centerPos, {
@@ -477,7 +477,7 @@ let roleMammyRanged = {
         if (rangedCreeps.length <= 1) {
             let keeperCreeps = this.getKeeperCreeps(creep.room);
             let invaderCreeps = creep.room.find(FIND_HOSTILE_CREEPS, {
-                filter: h => h.name && (h.name.startsWith('invader') || h.name.startsWith('Keeper'))
+                filter: h => h.name && (h.name.startsWith('Keeper') || h.name.startsWith('invader'))
             });
 
             if (keeperCreeps.length > 0) {

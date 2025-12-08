@@ -14,12 +14,16 @@ let spawnSteveManager = {
             steveRepairer: 1,
             steveInvader: 100,
             steveInvaderTwo: 0,
+            steveInvaderTree: 100,
             steveRemoteMiner: 100,
-            steveRemoteMinerTwo: 0,
+            steveRemoteMinerTwo: 100,
+            steveRemoteMinerTree: 0,
             steveRemoteHauler: 100,
-            steveRemoteHaulerTwo: 0,
+            steveRemoteHaulerTwo: 100,
             steveReserver: 50,
             steveReserverTwo: 50,
+            steveSteveNanny: 120,
+            steveSteveRanged: 120,
         };
 
         const roleSum = {
@@ -30,12 +34,16 @@ let spawnSteveManager = {
             steveRepairer: 0,
             steveInvader: 0,
             steveInvaderTwo: 0,
+            steveInvaderTree: 0,
             steveRemoteMiner: 0,
             steveRemoteMinerTwo: 0,
+            steveRemoteMinerTree: 0,
             steveRemoteHauler: 0,
             steveRemoteHaulerTwo: 0,
             steveReserver: 0,
             steveReserverTwo: 0,
+            steveSteveNanny: 0,
+            steveSteveRanged: 0,
         };
 
 
@@ -45,57 +53,75 @@ let spawnSteveManager = {
                 roleSum[c.memory.role] += c.ticksToLive;
             }
         }
-
-
-
-        if (roleSum.steveMover < minRoles.steveMover && !spawn.spawning) {
-            if (this.spawnMover() === OK) return;
+        if (roleSum.steveSteveRanged < minRoles.steveSteveRanged  ){
+            if (this.spawnRanged() === OK) return;
         }
 
-        let hasEnoughMover = roleSum.steveMover >= minRoles.steveMover;
 
-        if (hasEnoughMover) {
-            if (roleSum.steveMiner < minRoles.steveMiner && !spawn.spawning) {
-                if (this.spawnMiner() === OK) return;
+        if (roleSum.steveSteveNanny < minRoles.steveSteveNanny && !spawn.spawning) {
+            if (this.spawnSteveNanny() === OK) return;
+        }
+
+        let hasEnoughSteveNanny = roleSum.steveSteveNanny >= minRoles.steveSteveNanny;
+
+        if (hasEnoughSteveNanny) {
+            if (roleSum.steveMover < minRoles.steveMover && !spawn.spawning) {
+                if (this.spawnMover() === OK) return;
             }
 
-            let hasEnoughMiner = roleSum.steveMiner >= minRoles.steveMiner;
+            let hasEnoughMover = roleSum.steveMover >= minRoles.steveMover;
 
-            if (hasEnoughMiner) {
-                if (roleSum.steveUpdater < minRoles.steveUpdater && !spawn.spawning) {
-                    if (this.spawnUpdater() === OK) return;
-                }
-
-                if (roleSum.steveRepairer < minRoles.steveRepairer && !spawn.spawning) {
-                    if (this.spawnRepairer() === OK) return;
+            if (hasEnoughMover) {
+                if (roleSum.steveMiner < minRoles.steveMiner && !spawn.spawning) {
+                    if (this.spawnMiner() === OK) return;
                 }
 
-                if (roleSum.steveInvader < minRoles.steveInvader && !spawn.spawning) {
-                    if (this.spawnInvader() === OK) return;
-                }
+                let hasEnoughMiner = roleSum.steveMiner >= minRoles.steveMiner;
 
-                if (roleSum.steveInvaderTwo < minRoles.steveInvaderTwo && !spawn.spawning) {
-                    if (this.spawnInvaderTwo() === OK) return;
-                }
+                if (hasEnoughMiner) {
+                    if (roleSum.steveUpdater < minRoles.steveUpdater && !spawn.spawning) {
+                        if (this.spawnUpdater() === OK) return;
+                    }
 
-                if (roleSum.steveRemoteMinerTwo < minRoles.steveRemoteMinerTwo && !spawn.spawning) {
-                    if (this.spawnRemoteMinerTwo() === OK) return;
-                }
+                    if (roleSum.steveRepairer < minRoles.steveRepairer && !spawn.spawning) {
+                        if (this.spawnRepairer() === OK) return;
+                    }
 
-                if (roleSum.steveRemoteMiner < minRoles.steveRemoteMiner && !spawn.spawning) {
-                    if (this.spawnRemoteMiner() === OK) return;
-                }
-                if (roleSum.steveRemoteHauler < minRoles.steveRemoteHauler && !spawn.spawning) {
-                    if (this.spawnRemoteHauler() === OK) return;
-                }
-                if (roleSum.steveRemoteHaulerTwo < minRoles.steveRemoteHaulerTwo && !spawn.spawning) {
-                    if (this.spawnRemoteHaulerTwo() === OK) return;
-                }
-                if (roleSum.steveReserver < minRoles.steveReserver && !spawn.spawning) {
-                    if (this.spawnReserver() === OK) return;
-                }
-                if (roleSum.steveReserverTwo < minRoles.steveReserverTwo && !spawn.spawning) {
-                    if (this.spawnReserverTwo() === OK) return;
+                    if (roleSum.steveInvader < minRoles.steveInvader && !spawn.spawning) {
+                        if (this.spawnInvader() === OK) return;
+                    }
+
+                    if (roleSum.steveInvaderTwo < minRoles.steveInvaderTwo && !spawn.spawning) {
+                        if (this.spawnInvaderTwo() === OK) return;
+                    }
+
+                    if (roleSum.steveInvaderTree < minRoles.steveInvaderTree && !spawn.spawning) {
+                        if (this.spawnInvaderTree() === OK) return;
+                    }
+
+                    if (roleSum.steveRemoteMinerTwo < minRoles.steveRemoteMinerTwo && !spawn.spawning) {
+                        if (this.spawnRemoteMinerTwo() === OK) return;
+                    }
+
+                    if (roleSum.steveRemoteMinerTree < minRoles.steveRemoteMinerTree && !spawn.spawning) {
+                        if (this.spawnRemoteMinerTree() === OK) return;
+                    }
+
+                    if (roleSum.steveRemoteMiner < minRoles.steveRemoteMiner && !spawn.spawning) {
+                        if (this.spawnRemoteMiner() === OK) return;
+                    }
+                    if (roleSum.steveRemoteHauler < minRoles.steveRemoteHauler && !spawn.spawning) {
+                        if (this.spawnRemoteHauler() === OK) return;
+                    }
+                    if (roleSum.steveRemoteHaulerTwo < minRoles.steveRemoteHaulerTwo && !spawn.spawning) {
+                        if (this.spawnRemoteHaulerTwo() === OK) return;
+                    }
+                    if (roleSum.steveReserver < minRoles.steveReserver && !spawn.spawning) {
+                        if (this.spawnReserver() === OK) return;
+                    }
+                    if (roleSum.steveReserverTwo < minRoles.steveReserverTwo && !spawn.spawning) {
+                        if (this.spawnReserverTwo() === OK) return;
+                    }
                 }
             }
         }
@@ -104,11 +130,11 @@ let spawnSteveManager = {
     spawnUpdater: function() {
         let spawn = Game.spawns['Steve'];
         if (!spawn) return ERR_INVALID_TARGET;
-
         let body = [];
-        body.push(...Array(15).fill(WORK));
-        body.push(...Array(5).fill(CARRY));
-        body.push(...Array(1).fill(MOVE));
+
+        body.push(...Array(20).fill(WORK));
+        body.push(...Array(5).fill(MOVE));
+        body.push(...Array(10).fill(CARRY));
 
         let homeRoom = spawn.room.name;
         let name = 'Updater_' + spawn.name + '_' + homeRoom + '_' + Game.time;
@@ -135,6 +161,24 @@ let spawnSteveManager = {
         return spawn.spawnCreep(body, name, {
             memory: {
                 role: 'steveMiner',
+                homeRoom: homeRoom
+            }
+        });
+    },
+
+    spawnSteveNanny: function() {
+        let spawn = Game.spawns['Steve'];
+        if (!spawn) return ERR_INVALID_TARGET;
+        let body = [];
+
+        body.push(...Array(14).fill(CARRY));
+        body.push(...Array(7).fill(MOVE));
+
+        let homeRoom = spawn.room.name;
+        let name = 'Nanny_' + spawn.name + '_' + homeRoom + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'steveSteveNanny',
                 homeRoom: homeRoom
             }
         });
@@ -200,9 +244,10 @@ let spawnSteveManager = {
         if (!spawn) return ERR_INVALID_TARGET;
 
         let body = [];
-        body.push(...Array(5).fill(WORK));
-        body.push(...Array(8).fill(CARRY));
-        body.push(...Array(8).fill(MOVE));
+
+        body.push(...Array(20).fill(WORK));
+        body.push(...Array(17).fill(MOVE));
+        body.push(...Array(13).fill(CARRY));
 
         let homeRoom = spawn.room.name;
         let name = 'Repairer_' + spawn.name + '_' + homeRoom + '_' + Game.time;
@@ -211,6 +256,26 @@ let spawnSteveManager = {
             memory: {
                 role: 'steveRepairer',
                 homeRoom: homeRoom
+            }
+        });
+    },
+
+
+    spawnRanged: function() {
+        spawn = Game.spawns['SteveDelta']
+        if (!spawn) return ERR_INVALID_TARGET;
+
+        let body = [];
+        body.push(...Array(5).fill(TOUGH));
+        body.push(...Array(15).fill(MOVE));
+        body.push(...Array(10).fill(RANGED_ATTACK));
+
+        let targetRoom = 'W21N56';
+        let name = 'Ranged_' + spawn.name + '_' + targetRoom + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'steveSteveRanged',
+                targetRoom: targetRoom
             }
         });
     },
@@ -238,6 +303,7 @@ let spawnSteveManager = {
     spawnInvaderTwo: function() {
         let spawn = Game.spawns['Steve'];
         if (!spawn) return ERR_INVALID_TARGET;
+        let targetRoomTwo = 'W19N55'
 
         let body = [];
         body.push(...Array(10).fill(WORK));
@@ -245,11 +311,32 @@ let spawnSteveManager = {
         body.push(...Array(9).fill(MOVE));
 
         let homeRoom = spawn.room.name;
-        let name = 'Invader_' + spawn.name + '_' + targetRoomTwo + '_' + Game.time;
+        let name = 'InvaderTwo_' + spawn.name + '_' + targetRoomTwo + '_' + Game.time;
 
         return spawn.spawnCreep(body, name, {
             memory: {
                 role: 'steveInvaderTwo',
+                homeRoom: homeRoom,
+                targetRoom: targetRoomTwo,
+            }
+        });
+    },
+    spawnInvaderTree: function() {
+        let spawn = Game.spawns['Steve'];
+        if (!spawn) return ERR_INVALID_TARGET;
+        let targetRoomTwo = 'W21N56'
+
+        let body = [];
+        body.push(...Array(10).fill(WORK));
+        body.push(...Array(8).fill(CARRY));
+        body.push(...Array(9).fill(MOVE));
+
+        let homeRoom = spawn.room.name;
+        let name = 'InvaderTree_' + spawn.name + '_' + targetRoomTwo + '_' + Game.time;
+
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'steveInvaderTree',
                 homeRoom: homeRoom,
                 targetRoom: targetRoomTwo,
             }
@@ -299,6 +386,30 @@ let spawnSteveManager = {
                 role: 'steveRemoteMinerTwo',
                 homeRoom: homeRoom,
                 targetRoom: targetRoomTwo,
+                miningPositions: miningPositions,
+            }
+        });
+    },
+    spawnRemoteMinerTree: function() {
+        let spawn = Game.spawns['Steve'];
+        let targetRoomTree = 'W19N55'
+        if (!spawn) return ERR_INVALID_TARGET;
+        let miningPositions = [
+            { x: 15, y: 6 },
+        ];
+
+
+        let body = [];
+        body.push(...Array(6).fill(WORK));
+        body.push(...Array(6).fill(MOVE));
+
+        let homeRoom = spawn.room.name;
+        let name = 'Miner_' + spawn.name + '_' + targetRoomTree + '_' + Game.time;
+        return spawn.spawnCreep(body, name, {
+            memory: {
+                role: 'steveRemoteMinerTree',
+                homeRoom: homeRoom,
+                targetRoom: targetRoomTree,
                 miningPositions: miningPositions,
             }
         });

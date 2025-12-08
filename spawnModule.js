@@ -30,22 +30,11 @@ const spawnModule = {
     spawnAttacker: function(targetRoom, options = {}) {
 	let spawn = Game.spawns['Mammy'];
 	let energyAvailable = spawn.room.energyAvailable;
-	let body = [
-	    TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-	    TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-	    TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-	    TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
-	    TOUGH, TOUGH, TOUGH, TOUGH, TOUGH,
+	let body = [];
 
-	    MOVE, MOVE, MOVE, MOVE, MOVE,
-	    MOVE, MOVE, MOVE, MOVE, MOVE,
-	    MOVE, MOVE,
-
-	    ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-	    ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
-	    ATTACK, ATTACK, ATTACK,
-
-	];
+	body.push(...Array(15).fill(MOVE));
+	body.push(...Array(15).fill(ATTACK));
+	body.push(...Array(20).fill(MOVE));
 
 	/*if (energyAvailable >= 2290) {
 	    body = [

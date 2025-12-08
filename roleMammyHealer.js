@@ -6,7 +6,7 @@ let roleMammyHealer = {
 
         // --- Двигаемся в целевую комнату ---
         if (creep.room.name !== targetRoom) {
-            creepMovement.moveTo(creep, new RoomPosition(27, 30, targetRoom), {
+            creepMovement.moveTo(creep, new RoomPosition(25, 31, targetRoom), {
                 reusePath: 20
             });
             return;
@@ -25,7 +25,7 @@ let roleMammyHealer = {
 
         if (damagedCreeps.length === 0) {
             // Нет целей — стоим в центре
-            let centerPos = new RoomPosition(27, 30, targetRoom);
+            let centerPos = new RoomPosition(38, 31, targetRoom);
             if (!creep.pos.isEqualTo(centerPos)) {
                 creepMovement.moveTo(creep, centerPos, {
                     reusePath: 10,

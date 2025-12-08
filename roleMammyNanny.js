@@ -5,7 +5,7 @@ let roleMammyNanny = {
         const homeRoom = creep.memory.homeRoom || (Game.spawns['Mammy'] ? Game.spawns['Mammy'].room.name : creep.room.name);
         
         if (homeRoom && creep.room.name !== homeRoom) {
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+            creepMovement.moveTo(creep, new RoomPosition(20, 21, homeRoom), {
                 reusePath: 10
             });
             return;
@@ -58,7 +58,7 @@ let roleMammyNanny = {
                         }
                     }
                 } else {
-                    creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                    creepMovement.moveTo(creep, new RoomPosition(20, 21, homeRoom), {
                         reusePath: 10
                     });
                 }
@@ -75,7 +75,7 @@ let roleMammyNanny = {
                     });
                 }
             } else {
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                creepMovement.moveTo(creep, new RoomPosition(20, 21, homeRoom), {
                     reusePath: 10
                 });
             }

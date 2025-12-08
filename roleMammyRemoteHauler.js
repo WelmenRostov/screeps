@@ -73,9 +73,9 @@ let roleMammyRemoteHauler = {
                     if (creep.pickup(committedTarget) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
                     }
+                    }
+                    return;
                 }
-                return;
-            }
 
             let allSources = [];
 
@@ -88,8 +88,8 @@ let roleMammyRemoteHauler = {
                     amount: c.store[RESOURCE_ENERGY] || 0,
                     type: 'container',
                     id: c.id
-                });
-            }
+                        });
+                    }
 
             let drops = creep.room.find(FIND_DROPPED_RESOURCES, {
                 filter: r => r.resourceType === RESOURCE_ENERGY && r.amount > 0
@@ -100,13 +100,13 @@ let roleMammyRemoteHauler = {
                     amount: d.amount,
                     type: 'drop',
                     id: d.id
-                });
-            }
+                        });
+                    }
 
             let tombstones = creep.room.find(FIND_TOMBSTONES, {
                 filter: t => t.store && (t.store[RESOURCE_ENERGY] || 0) > 0
             });
-            for (let t of tombstones) {
+                for (let t of tombstones) {
                 allSources.push({
                     target: t,
                     amount: t.store[RESOURCE_ENERGY] || 0,
@@ -137,8 +137,8 @@ let roleMammyRemoteHauler = {
                     if (creep.pickup(bestSource.target) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
                     }
-                }
-                return;
+                    }
+                    return;
             }
 
             creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {

@@ -1,0 +1,25 @@
+let PositionSystem = {
+
+    occupy(creep, posList, range = 0) {
+        for (let pos of posList) {
+            // if exactly on spot
+            if (creep.pos.isEqualTo(pos.x, pos.y)) return true;
+
+            // if spot is free
+            let occupied = creep.room.lookForAt(LOOK_CREEPS, pos.x, pos.y).length > 0;
+            if (!occupied) {
+                let Move = require('system.move');
+                Move.move(creep, new RoomPosition(pos.x, pos.y, pos.room), { range });
+                return false;
+            }
+        }
+
+        // fallback − move to closest spot
+        let closest = posList[0];
+        let Move = require('system.move');
+        Move.move(creep, new RoomPosition(closest.x, closest.y, closest.room), { range });
+        return false;
+    }
+};
+
+module.exports = PositionSystem;

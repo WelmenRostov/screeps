@@ -1,9 +1,12 @@
 let roleTower = {
     /** @param {StructureTower} tower **/
     run: function(tower) {
-        new RoomVisual(tower.room.name).text('🏰', tower.pos.x, tower.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
+        new RoomVisual(tower.room.name).text('⚪️', tower.pos.x, tower.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
-        let hostileCreeps = tower.room.find(FIND_HOSTILE_CREEPS);
+        let hostileCreeps = tower.room.find(FIND_HOSTILE_CREEPS, {
+            filter: c => c.owner.username !== 'an_w'
+        });
+
         if (hostileCreeps.length > 0) {
             if (!Memory.towerTargets) Memory.towerTargets = {};
             if (!Memory.towerTargets[tower.room.name]) Memory.towerTargets[tower.room.name] = {};

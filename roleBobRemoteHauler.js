@@ -80,7 +80,7 @@ let roleBobRemoteHauler = {
                         hasEnergy = (target.store && target.store[RESOURCE_ENERGY] || 0) > 0;
                     } else if (target.resourceType === RESOURCE_ENERGY) {
                         hasEnergy = target.amount > 0;
-                    }
+                }
                     
                     if (hasEnergy) {
                         committedTarget = target;
@@ -89,7 +89,7 @@ let roleBobRemoteHauler = {
                     }
                 } else {
                     creep.memory.committedTargetId = null;
-                }
+                    }
             }
 
             if (committedTarget) {
@@ -101,8 +101,8 @@ let roleBobRemoteHauler = {
                     if (creep.pickup(committedTarget) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, committedTarget, { reusePath: 5 });
                     }
-                }
-                return;
+                    }
+                    return;
             }
 
             let allSources = [];
@@ -110,7 +110,7 @@ let roleBobRemoteHauler = {
             let containers = creep.room.find(FIND_STRUCTURES, {
                 filter: s => s.structureType === STRUCTURE_CONTAINER && (s.store[RESOURCE_ENERGY] || 0) > 0
             });
-            for (let c of containers) {
+                for (let c of containers) {
                 allSources.push({
                     target: c,
                     amount: c.store[RESOURCE_ENERGY] || 0,
@@ -165,8 +165,8 @@ let roleBobRemoteHauler = {
                     if (creep.pickup(bestSource.target) === ERR_NOT_IN_RANGE) {
                         creepMovement.moveTo(creep, bestSource.target, { reusePath: 5 });
                     }
-                }
-                return;
+                    }
+                    return;
             }
 
             if (creep.room.name === targetRoom) {

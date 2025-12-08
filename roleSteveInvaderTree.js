@@ -1,10 +1,10 @@
 const creepMovement = require('./creepMovement');
 
-let roleSteveInvader = {
+let roleSteveInvaderTree = {
     run: function(creep) {
         new RoomVisual(creep.room.name).text('🏗️', creep.pos.x, creep.pos.y - 0.55, { align: 'center', font: 0.5, opacity: 1 });
 
-        const targetRoom = creep.memory.targetRoom || 'W22N55';
+        const targetRoom =  'W21N56';
         const homeRoom = creep.memory.homeRoom || creep.room.name;
 
         if (creep.store[RESOURCE_ENERGY] === 0) {
@@ -189,6 +189,6 @@ let roleSteveInvader = {
     }
 };
 
-module.exports = roleSteveInvader;
+module.exports = roleSteveInvaderTree;
 
 

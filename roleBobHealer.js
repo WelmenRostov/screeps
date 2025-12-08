@@ -36,12 +36,12 @@ let roleBobHealer = {
             if (range <= 1) {
                 if (target.hits < target.hitsMax) {
                     creep.heal(target);
-                }
+                    }
             } else if (range <= 3) {
                 if (target.hits < target.hitsMax) {
                     creep.rangedHeal(target);
-                }
-            }
+                            }
+                        }
 
             if (range > 1) {
                 creepMovement.moveTo(creep, target, {

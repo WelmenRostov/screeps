@@ -1,8 +1,6 @@
 const creepMovement = require('./creepMovement');
-const { isNannyReserveContainer } = require('./variables');
 
 let roleBuilder = {
-    /** @param {Creep} creep **/
     run: function(creep) {
 
 	if (creep.store[RESOURCE_ENERGY] === 0) {
@@ -17,7 +15,7 @@ let roleBuilder = {
 	    let priorityRampartPos = new RoomPosition(37, 34, creep.room.name);
 	    let priorityRampart = priorityRampartPos.lookFor(LOOK_STRUCTURES).find(s => s.structureType === STRUCTURE_RAMPART);
 
-	    if (priorityRampart && priorityRampart.hits < 4000000) {
+	    if (priorityRampart && priorityRampart.hits < 1000000) {
 		if (creep.repair(priorityRampart) === ERR_NOT_IN_RANGE) {
 		    creepMovement.moveTo(creep, priorityRampart, { visualizePathStyle: { stroke: '#ff8800' } });
 		}
@@ -63,7 +61,7 @@ let roleBuilder = {
 	    }
 
 	    let weakRampart = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-		filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < 3000000
+		filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < 1000000
 	    });
 	    if (weakRampart) {
 		if (creep.repair(weakRampart) === ERR_NOT_IN_RANGE) {
@@ -73,7 +71,7 @@ let roleBuilder = {
 	    }
 
 	    let weakWall = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-		filter: (s) => s.structureType === STRUCTURE_WALL && s.hits < 4000000
+		filter: (s) => s.structureType === STRUCTURE_WALL && s.hits < 1000000
 	    });
 	    if (weakWall) {
 		if (creep.repair(weakWall) === ERR_NOT_IN_RANGE) {

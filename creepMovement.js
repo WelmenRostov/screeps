@@ -185,6 +185,10 @@ let creepMovement = {
 
     // Обёртка для moveTo с автоматической уступкой дороги
     moveTo: function(creep, target, baseOptions = {}) {
+        if (global.__useRevolutionCPU) {
+            const legacyAdapter = require('revolutionCPU/movement.legacyAdapter');
+            return legacyAdapter.moveTo(creep, target, baseOptions);
+        }
         let options = this.getMoveOptions(creep, baseOptions);
         return creep.moveTo(target, options);
     }

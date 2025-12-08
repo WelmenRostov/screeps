@@ -41,7 +41,7 @@ let roleSteveRemoteHauler = {
         if (!isFull) {
             if (creep.room.name !== targetRoom) {
                 creep.memory.committedTargetId = null;
-                creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+                creepMovement.moveTo(creep, new RoomPosition(39, 34, targetRoom), {
                     reusePath: 15
                 });
                 return;
@@ -170,7 +170,7 @@ let roleSteveRemoteHauler = {
             }
 
             if (creep.room.name === targetRoom) {
-                const waitPos = new RoomPosition(19, 48, targetRoom);
+                const waitPos = new RoomPosition(39, 34, targetRoom);
                 if (!creep.pos.isEqualTo(waitPos)) {
                     creepMovement.moveTo(creep, waitPos, {
                         reusePath: 10
@@ -179,7 +179,7 @@ let roleSteveRemoteHauler = {
                 return;
             }
 
-            creepMovement.moveTo(creep, new RoomPosition(25, 25, targetRoom), {
+            creepMovement.moveTo(creep, new RoomPosition(39, 34, targetRoom), {
                 reusePath: 10
             });
         } else {
@@ -211,7 +211,7 @@ let roleSteveRemoteHauler = {
                 }
             } else {
                 if (creep.room.name !== homeRoom) {
-                    creepMovement.moveTo(creep, new RoomPosition(25, 25, homeRoom), {
+                    creepMovement.moveTo(creep, new RoomPosition(39, 34, homeRoom), {
                         reusePath: 15
                     });
                     return;

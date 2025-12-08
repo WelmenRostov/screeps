@@ -1,14 +1,14 @@
 const creepMovement = require('./creepMovement');
 
-let roleRemoteHauler = {
+let roleHauler = {
     /** @param {Creep} creep **/
     run: function(creep) {
-        new RoomVisual(creep.room.name).text('📦', creep.pos.x, creep.pos.y - 0.55, {
-            align: 'center', font: 0.5, opacity: 1
+        new RoomVisual(creep.room.name).text('🟣', creep.pos.x, creep.pos.y - 0.55, {
+            align: 'center', font: 0.3, opacity: 1
         });
 
-        const bobSpawn = creep.memory.mySpawn || Game.spawns['Bob'];
-        const mammySpawn = creep.memory.youSpawn || Game.spawns['Mammy'];
+        const bobSpawn = Game.spawns['Steve'];
+        const mammySpawn = Game.spawns['Channy'];
 
         if (!bobSpawn || !bobSpawn.room || !bobSpawn.room.storage) return;
         if (!mammySpawn || !mammySpawn.room || !mammySpawn.room.storage) return;
@@ -71,4 +71,4 @@ let roleRemoteHauler = {
     }
 };
 
-module.exports = roleRemoteHauler;
+module.exports = roleHauler;
